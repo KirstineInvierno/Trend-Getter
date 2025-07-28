@@ -214,3 +214,4 @@ __marimo__/
 *.tfvars
 
 .pytest_cache
+.terraform.tfstate.lock.info
