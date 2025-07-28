@@ -8,18 +8,18 @@ DROP TABLE IF EXISTS users;
 
 
 CREATE TABLE users (
-    user_id INT PRIMARY KEY,
-    email TEXT NOT NULL,
-    phone_number TEXT NOT NULL
+    user_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    email TEXT UNIQUE NOT NULL CHECK(email LIKE '%_@_%._%'),
+    phone_number TEXT UNIQUE NOT NULL
 );
 
 CREATE TABLE topic (
-    topic_id INT PRIMARY KEY,
-    topic_name TEXT NOT NULL
+    topic_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    topic_name TEXT UNIQUE NOT NULL
 );
 
 CREATE TABLE user_topic (
-    user_topic_id BIGINT PRIMARY KEY,
+    user_topic_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     user_id INT NOT NULL,
     topic_id INT NOT NULL,
     active BOOLEAN NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE user_topic (
 );
 
 CREATE TABLE mention(
-    mention_id BIGINT PRIMARY KEY,
+    mention_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     topic_id INT NOT NULL,
     timestamp TIMESTAMP NOT NULL,
     sentiment_label TEXT NOT NULL,
