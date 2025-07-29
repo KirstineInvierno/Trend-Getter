@@ -70,8 +70,8 @@ resource "aws_db_instance" "postgres" {
   instance_class          = "db.t3.small"
   allocated_storage       = 200
   storage_type            = "gp2"
-  username                = var.db_username
-  password                = var.db_password
+  username                = var.DB_USERNAME
+  password                = var.DB_PASSWORD
   db_name                 = "trend-getter-db"
   multi_az                = true
   publicly_accessible     = false
