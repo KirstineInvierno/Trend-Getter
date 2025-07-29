@@ -29,7 +29,7 @@ jobs:
 
             - name: Run pytest
               run: |
-                if ls tests/*.py 1> /dev/null 2>&1; then
+                if find . -type f -name "test_*.py" | grep -q .; then
                   echo "Running tests..."
                   pytest
                 else
