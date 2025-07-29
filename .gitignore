@@ -207,11 +207,12 @@ marimo/_lsp/
 __marimo__/
 
 
+.terraform/providers
 .terraform/
 
-*.tfstate
-*.tfstate.*
-*.tfvars
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/*.tfvars
 
 .pytest_cache
 .terraform.tfstate.lock.info
