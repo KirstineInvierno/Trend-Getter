@@ -23,7 +23,7 @@ def make_mock_commit(post_text: list[str]):
 
 def test_extract_message_logs_when_topic_found(caplog):
     topics = ["football"]
-    post_text = "i love football"
+    post_text = "love football"
     firehose = BlueSkyFirehose(topics)
 
     with patch("extract.parse_subscribe_repos_message") as mock_parse_sub, \
