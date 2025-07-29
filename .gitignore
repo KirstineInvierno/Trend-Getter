@@ -209,6 +209,7 @@ __marimo__/
 
 .terraform/providers
 .terraform/
+.terraform
 
 terraform/*.tfstate
 terraform/*.tfstate.*
