@@ -1,7 +1,8 @@
 """Extract script to read live data from the Bluesky firehose API"""
-from atproto import FirehoseSubscribeReposClient, parse_subscribe_repos_message, CAR, models
 import argparse
 import logging
+from atproto import FirehoseSubscribeReposClient, parse_subscribe_repos_message, CAR, models
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -34,7 +35,8 @@ class BlueSkyFirehose:
                 if raw.get("$type") == "app.bsky.feed.post":
                     post_text = raw.get("text").lower()
                     if self.topic in post_text:
-                        # Do transform  and load on each raw message extracted here. Similar to how ETL was done in Museum Kafka.
+                        # Do transform  and load on each raw message extracted here.
+                        # Similar to how ETL was done in Museum Kafka.
                         logging.info(raw)
 
     def start(self):
