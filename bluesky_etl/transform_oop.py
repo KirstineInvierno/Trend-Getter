@@ -11,6 +11,7 @@ import time
 import logging
 import pandas as pd
 from transformers import pipeline
+from collections.abc import Callable
 
 
 TRANSFORMER_MODEL = "finiteautomata/bertweet-base-sentiment-analysis"
@@ -22,6 +23,7 @@ logging.basicConfig(
 
 
 class MessageError(Exception):
+    """Error for when creating Message object"""
     pass
 
 
@@ -69,7 +71,7 @@ class MessageTransformer:
         self._topics = None
 
     @property
-    def sentiment_pipeline(self) -> function:
+    def sentiment_pipeline(self) -> Callable:
         """Lazy loading of sentiment analysis pipeline"""
         if self._sentiment_pipeline is None:
             self._sentiment_pipeline = pipeline(model=self.sentiment_model)
