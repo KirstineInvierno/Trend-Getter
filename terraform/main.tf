@@ -63,7 +63,7 @@ resource "aws_security_group" "rds_sg" {
   }
 }
 
-resource "aws_db_instance" "postgres" {
+resource "aws_db_instance" "postgresql" {
   identifier              = "c18-trend-getter-rds"
   engine                  = "postgresql"
   engine_version          = "17.4"
