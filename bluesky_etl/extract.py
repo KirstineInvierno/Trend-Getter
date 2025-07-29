@@ -13,7 +13,7 @@ logging.basicConfig(
 class BlueSkyFirehose:
     """Tracks Bluesky messages that contain a given topic keyword"""
 
-    def __init__(self, topic: str):
+    def __init__(self, topics: str):
         self.topics = [topic.lower() for topic in topics]
         self.client = FirehoseSubscribeReposClient()
 
