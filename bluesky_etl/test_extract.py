@@ -1,4 +1,4 @@
-
+# pylint: skip-file
 import logging
 from unittest.mock import MagicMock, patch
 from atproto import models
