@@ -72,7 +72,7 @@ resource "aws_db_instance" "postgresql" {
   storage_type            = "gp2"
   username                = var.DB_USERNAME
   password                = var.DB_PASSWORD
-  db_name                 = "trend-getter-db"
+  db_name                 = "trendgetterdb"
   multi_az                = true
   publicly_accessible     = false
   skip_final_snapshot     = true
