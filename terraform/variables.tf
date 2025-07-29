@@ -1,9 +1,9 @@
-variable "db_username" {
+variable "DB_USERNAME" {
   type        = string
   description = "The username for the RDS database"
 }
 
-variable "db_password" {
+variable "DB_PASSWORD" {
   type        = string
   description = "The password for the RDS database"
   sensitive   = true
