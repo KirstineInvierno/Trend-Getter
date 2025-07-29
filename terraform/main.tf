@@ -31,7 +31,7 @@ data "aws_subnet" "private_3" {
 }
 
 resource "aws_db_subnet_group" "rds_subnet_group" {
-  name = "rds-subnet-group"
+  name = "c18-trend-getter-rds-subnet-group"
   subnet_ids = [
     data.aws_subnet.private_1.id,
     data.aws_subnet.private_2.id,
