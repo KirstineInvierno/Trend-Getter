@@ -69,19 +69,22 @@ class MessageTransformer:
         self._topics = None
 
     @property
-    def sentiment_pipeline(self):
+    def sentiment_pipeline(self) -> function:
         """Lazy loading of sentiment analysis pipeline"""
         if self._sentiment_pipeline is None:
             self._sentiment_pipeline = pipeline(model=self.sentiment_model)
         return self._sentiment_pipeline
 
     @property
-    def topics(self):
+    def topics(self) -> pd.DataFrame:
         """Lazy loading topics"""
         if self._topics is None:
             logging.info("Fetching topics from database...")
             time1 = time.time()
-            self._topics = ["football", "england", "spain", "cricket", "trump"]
+            self._topics = pd.DataFrame({
+                "topic_id": [1, 2, 3, 4, 5],
+                "topic": ["football", "england", "spain", "cricket", "trump"]
+            })
             time2 = time.time()
             logging.info(f"Fetched topics in {round(time2-time1, 2)} seconds")
         return self._topics
@@ -112,7 +115,7 @@ class MessageTransformer:
         logging.info("Matching topics in topics list...")
         topics_found = []
 
-        for topic in self.topics:
+        for topic in self.topics["topic"]:
             if topic.lower() in text.lower():
                 topics_found.append(topic)
 
