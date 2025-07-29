@@ -65,7 +65,7 @@ resource "aws_security_group" "rds_sg" {
 
 resource "aws_db_instance" "postgresql" {
   identifier              = "c18-trend-getter-rds"
-  engine                  = "postgresql"
+  engine                  = "postgres"
   engine_version          = "17.4"
   instance_class          = "db.t3.small"
   allocated_storage       = 200
