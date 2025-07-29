@@ -23,10 +23,10 @@ jobs:
    permissions: write-all
    runs-on: ubuntu-latest
    env:
+    TF_VAR_DB_USERNAME: ${{ secrets.TF_VAR_DB_USERNAME }}
+    TF_VAR_DB_PASSWORD: ${{ secrets.TF_VAR_DB_PASSWORD }}
     TF_VAR_DB_HOST: ${{ secrets.TF_VAR_DB_HOST }}
     TF_VAR_DB_PORT: ${{ secrets.TF_VAR_DB_PORT }}
-    TF_VAR_DB_USER: ${{ secrets.TF_VAR_DB_USER }}
-    TF_VAR_DB_PASSWORD: ${{ secrets.TF_VAR_DB_PASSWORD }}
     TF_VAR_DB_NAME: ${{ secrets.TF_VAR_DB_NAME }}
    defaults:
      run:

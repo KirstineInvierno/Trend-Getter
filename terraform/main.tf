@@ -31,7 +31,7 @@ data "aws_subnet" "private_3" {
 }
 
 resource "aws_db_subnet_group" "rds_subnet_group" {
-  name       = "rds-subnet-group"
+  name = "rds-subnet-group"
   subnet_ids = [
     data.aws_subnet.private_1.id,
     data.aws_subnet.private_2.id,
@@ -70,8 +70,8 @@ resource "aws_db_instance" "postgres" {
   instance_class          = "db.t3.small"
   allocated_storage       = 200
   storage_type            = "gp2"
-  username                = var.db_username
-  password                = var.db_password
+  username                = var.DB_USERNAME
+  password                = var.DB_PASSWORD
   db_name                 = "trend-getter-db"
   multi_az                = true
   publicly_accessible     = false
