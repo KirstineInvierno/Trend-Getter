@@ -9,33 +9,33 @@ data "aws_vpc" "main" {
   }
 }
 
-data "aws_subnet" "private_1" {
+data "aws_subnet" "public_1" {
   filter {
     name   = "tag:Name"
-    values = ["c18-private-subnet-1"]
+    values = ["c18-public-subnet-1"]
   }
 }
 
-data "aws_subnet" "private_2" {
+data "aws_subnet" "public_2" {
   filter {
     name   = "tag:Name"
-    values = ["c18-private-subnet-2"]
+    values = ["c18-public-subnet-2"]
   }
 }
 
-data "aws_subnet" "private_3" {
+data "aws_subnet" "public_3" {
   filter {
     name   = "tag:Name"
-    values = ["c18-private-subnet-3"]
+    values = ["c18-public-subnet-3"]
   }
 }
 
 resource "aws_db_subnet_group" "rds_subnet_group" {
   name = "c18-trend-getter-rds-subnet-group"
   subnet_ids = [
-    data.aws_subnet.private_1.id,
-    data.aws_subnet.private_2.id,
-    data.aws_subnet.private_3.id
+    data.aws_subnet.public_1.id,
+    data.aws_subnet.public_2.id,
+    data.aws_subnet.public_3.id
   ]
 
   tags = {
@@ -74,7 +74,7 @@ resource "aws_db_instance" "postgresql" {
   password                = var.DB_PASSWORD
   db_name                 = "trendgetterdb"
   multi_az                = true
-  publicly_accessible     = false
+  publicly_accessible     = true
   skip_final_snapshot     = true
   vpc_security_group_ids  = [aws_security_group.rds_sg.id]
   db_subnet_group_name    = aws_db_subnet_group.rds_subnet_group.name
