@@ -1,107 +1,215 @@
 """
-transform script:
-takes a message extracted from the API and transforms it to a 
+Transform script (OOP version):
+Takes a message extracted from the API and transforms it to a 
 DataFrame ready to load into the database
 """
+
+# pylint: disable=W1203
+
+import os
 from datetime import datetime
+import time
+from dotenv import load_dotenv
+import logging
 import pandas as pd
 from transformers import pipeline
+from collections.abc import Callable
+import sqlalchemy
+
+TRANSFORMER_MODEL = "finiteautomata/bertweet-base-sentiment-analysis"
+load_dotenv()
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 
-def get_sentiment(text: str) -> dict:
-    """
-    Uses an LLM to analyse a text snippet and suggest its sentiment
-    returns a dict with:
-        label - 'POS', 'NEG' or 'NEU'
-        score - certainty score from 0-1 (float)
-
-    uses finiteautomata/bertweet-base-sentiment-analysis model which
-    is finetuned for tweets
-    """
-    sentiment = pipeline(
-        model="finiteautomata/bertweet-base-sentiment-analysis")
-    return max(sentiment(text), key=lambda x: x.get("score"))
+class MessageError(Exception):
+    """Error for when creating Message object"""
+    pass
 
 
-def get_text(message: dict) -> str:
-    """extracts the text from a message that was posted"""
-    return """
-    BBC Radio 1
-    Newsbeat @ 12:45
-    
-    England's Lionesses go back-to-back as they win the Women's Euros for \
-        the second time, beating Spain on penalties in Switzerland.
-    """
+class Utility:
+
+    @staticmethod
+    def get_connection():
+        """returns a pscopg2 connection to the database"""
+        host = os.getenv("DB_HOST")
+        user = os.getenv("DB_USER")
+        password = os.getenv("DB_PASSWORD")
+        database = os.getenv("DB_NAME")
+        engine = sqlalchemy.create_engine(
+            f"postgresql+psycopg2://{user}:{password}@{host}/{database}")
+        return engine
 
 
-def get_timestamp(message: dict) -> datetime:
-    """extracts the timestamp from a message that was posted"""
-    return datetime.now()
+class Message:
+    """message recieved from API"""
+
+    def __init__(self, message_dict: dict):
+        self._validation(message_dict)
+
+        self.text = message_dict.get("text")
+        self.langs = message_dict.get("langs")
+        self.type = message_dict.get("$type")
+        self._timestamp = None
+        self._timestamp_string = message_dict.get("createdAt")
+
+    def _validation(self, message_dict: dict):
+        required_fields = [
+            "text",
+            "langs",
+            "$type",
+            "createdAt"
+        ]
+
+        for field in required_fields:
+            if field not in message_dict:
+                raise MessageError(
+                    f"Your message is missing the required field: {field} ")
+
+    @property
+    def timestamp(self) -> datetime:
+        """Extracts timestamp from message"""
+        if self._timestamp is None:
+            temp_timestamp = self._timestamp_string
+            self._timestamp = datetime.fromisoformat(temp_timestamp)
+
+        return self._timestamp
 
 
-def get_topics() -> list[str]:
-    """
-    returns a list of topics subscribed to by users 
-    (will need to access db for this in final version)
-    """
-    return ["football", "england", "spain", "cricket", "trump"]
+class MessageTransformer:
+    """Transforms API messages into DataFrames for database loading"""
 
+    def __init__(self, sentiment_model: str = TRANSFORMER_MODEL):
+        self.sentiment_model = sentiment_model
+        self._sentiment_pipeline = None
+        self._topics = None
 
-def topics_in_text(text: str, topics: list[str]) -> list[str] | None:
-    """
-    deciphers which topics from a given list of topics are 
-    in a given string
+    @property
+    def sentiment_pipeline(self) -> Callable:
+        """Lazy loading of sentiment analysis pipeline"""
+        if self._sentiment_pipeline is None:
+            self._sentiment_pipeline = pipeline(model=self.sentiment_model)
+        return self._sentiment_pipeline
 
-    in a future version could add LLM zero-shot classification functionality
-    """
-    topics_in = []
-    for topic in topics:
-        if topic.lower() in text.lower():
-            topics_in.append(topic)
+    @property
+    def topics(self) -> pd.DataFrame:
+        """Lazy loading topics"""
+        if self._topics is None:
+            logging.info("Fetching topics from database...")
+            time1 = time.time()
+            # self._topics = pd.DataFrame({
+            #     "topic_id": [1, 2, 3],
+            #     "topic": ["spain", "cricket", "trump"]
+            # })
+            engine = Utility.get_connection()
+            self._topics = pd.read_sql_table(
+                'topic', con=engine, schema='bluesky')
+            time2 = time.time()
+            logging.info(f"Fetched topics in {round(time2-time1, 2)} seconds")
+        return self._topics
 
-    if len(topics_in) < 1:
-        return None
+    def get_sentiment(self, text: str) -> dict:
+        """
+        Analyzes text sentiment using transformer model
 
-    return topics_in
+        Returns:
+            dict with label ('POS', 'NEG', 'NEU') and confidence score (0-1)
+        """
+        logging.info("Running sentiment analysis...")
+        time1 = time.time()
+        llm_pipeline = self.sentiment_pipeline
+        sentiments = llm_pipeline(text)  # separated to appease pylint
+        time2 = time.time()
+        logging.info(
+            f"Sentiment analysis complete in {round(time2-time1, 2)} seconds")
+        return max(sentiments, key=lambda sentiment: sentiment.get("score"))
 
+    def find_topics_in_text(self, text: str) -> list[str]:
+        """
+        Finds which subscribed topics are mentioned in the text
 
-def make_df(topic: str, sentiment: dict, timestamp: datetime) -> pd.DataFrame:
-    """creates DataFrame with data in the right format for loading"""
+        Returns:
+            List of topics found, or None if no topics found
+        """
+        print(self.topics)
+        logging.info("Matching topics in topics list...")
+        time1 = time.time()
+        topics_found = []
+        for topic_id in self.topics["topic_id"]:
+            topic = self.topics[self.topics["topic_id"]
+                                == topic_id]["topic_name"].reset_index()["topic_name"][0]
+            if topic.lower() in text.lower():
+                topics_found.append((topic_id, topic))
+        time2 = time.time()
+        logging.info(f"Matched topics in {round(time2-time1, 2)} seconds")
+        return topics_found
 
-    df = pd.DataFrame({
-        "topic": [topic],
-        "timestamp": [timestamp],
-        "sentiment_label": [sentiment.get("label")],
-        "sentiment_score": [sentiment.get("score")]
-    })
-    return df
+    def create_dataframe(self, topic_id: int, topic: str, sentiment: dict, timestamp: datetime) -> pd.DataFrame:
+        """Creates a single-row DataFrame with the given data"""
+        logging.info("Creating DataFrame...")
+        return pd.DataFrame({
+            "topic": [topic],
+            "topic_id": [topic_id],
+            "timestamp": [timestamp],
+            "sentiment_label": [sentiment.get("label")],
+            "sentiment_score": [sentiment.get("score")]
+        })
 
+    def transform(self, message: Message) -> pd.DataFrame | None:
+        """
+        Main transformation method: converts message to DataFrame
 
-def transform(message: dict) -> pd.DataFrame:
-    """
-    takes a message extracted from the API and transforms it to a 
-    DataFrame ready to load into the database
-    """
-    text = get_text(message)
-    timestamp = get_timestamp(message)
+        Args:
+            message: Dictionary containing message data from API
 
-    topics = get_topics()
-    topics_in = topics_in_text(text, topics)
-    if not topics_in:
-        return None
-    sentiment = get_sentiment(text)
+        Returns:
+            DataFrame ready for database loading, or None if no topics found
+        """
+        time1 = time.time()
+        logging.info("Begin transform script")
+        topics_found = self.find_topics_in_text(message.text)
+        if not topics_found:
+            logging.error("No matching topics found, returning None")
+            return None
 
-    dfs = []
+        sentiment = self.get_sentiment(message.text)
 
-    for topic in topics_in:
-        dfs.append(make_df(topic, sentiment, timestamp))
+        dataframes = []
+        for topic in topics_found:
+            df = self.create_dataframe(*topic, sentiment, message.timestamp)
+            dataframes.append(df)
 
-    return pd.concat(dfs, ignore_index=True)
+        time2 = time.time()
+        logging.info(
+            f"transform script complete in {round(time2-time1, 2)} seconds")
+
+        return pd.concat(dataframes, ignore_index=True)
 
 
 def main():
-    """main function"""
-    print(transform(None))
+    """Main function"""
+    message = Message({
+        'text': 'I love donald trump and cooking and photography',
+        'langs': ['en'],
+        '$type': 'app.bsky.feed.post',
+        'reply': {
+            'root': {
+                'cid': 'bafyreidcbtn7o3q5eksnj2qt5bff2glucf2wbwt6yo3zd4nzarneweibs4',
+                'uri': 'at://did:plc:4llrhdclvdlmmynkwsmg5tdc/app.bsky.feed.post/3luzluujzah2m'
+            },
+            'parent': {
+                'cid': 'bafyreidcbtn7o3q5eksnj2qt5bff2glucf2wbwt6yo3zd4nzarneweibs4',
+                'uri': 'at://did:plc:4llrhdclvdlmmynkwsmg5tdc/app.bsky.feed.post/3luzluujzah2m'
+            }
+        },
+        'createdAt': '2025-07-28T12:36:42.475Z'
+    })
+    transformer = MessageTransformer()
+    result = transformer.transform(message)
+    print(result)
 
 
 if __name__ == "__main__":
