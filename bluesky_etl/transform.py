@@ -9,12 +9,12 @@ DataFrame ready to load into the database
 import os
 from datetime import datetime
 import time
-from dotenv import load_dotenv
 import logging
+from collections.abc import Callable
+from dotenv import load_dotenv
 import pandas as pd
 from pandas import DataFrame
 from transformers import pipeline
-from collections.abc import Callable
 import sqlalchemy
 from sqlalchemy import Engine
 
@@ -29,11 +29,10 @@ logging.basicConfig(
 
 class MessageError(Exception):
     """Error for when creating Message object"""
-    pass
 
 
 class Utility:
-
+    """static methods for reusability"""
     @staticmethod
     def get_connection() -> Engine:
         """returns a sqlalchemy engine to connect to the database"""
@@ -47,6 +46,7 @@ class Utility:
 
     @staticmethod
     def get_topics() -> DataFrame:
+        """fetches topics from the db and returns it as a df"""
         engine = Utility.get_connection()
         topics = pd.read_sql_table(
             'topic', con=engine, schema='bluesky')
@@ -138,7 +138,6 @@ class MessageTransformer:
         Returns:
             List of topics found, or None if no topics found
         """
-        print(self.topics)
         logging.info("Matching topics in topics list...")
         time1 = time.time()
         topics_found = []
@@ -151,7 +150,8 @@ class MessageTransformer:
         logging.info(f"Matched topics in {round(time2-time1, 2)} seconds")
         return topics_found
 
-    def create_dataframe(self, topic_id: int, topic: str, sentiment: dict, timestamp: datetime) -> pd.DataFrame:
+    def create_dataframe(self, topic_id: int, topic: str,
+                         sentiment: dict, timestamp: datetime) -> pd.DataFrame:
         """Creates a single-row DataFrame with the given data"""
         logging.info("Creating DataFrame...")
         return pd.DataFrame({
