@@ -1,8 +1,7 @@
 """Extract script to read live data from the Bluesky firehose API"""
-import argparse
 import logging
 from atproto import FirehoseSubscribeReposClient, parse_subscribe_repos_message, CAR, models
-
+from transform_oop import Message, MessageTransformer, MessageError
 
 logging.basicConfig(
     level=logging.INFO,
@@ -11,11 +10,11 @@ logging.basicConfig(
 
 
 class BlueSkyFirehose:
-    """Tracks Bluesky messages that contain a given topic keyword"""
+    """Tracks all Bluesky messages"""
 
-    def __init__(self, topics: str):
-        self.topics = [topic.lower() for topic in topics]
+    def __init__(self):
         self.client = FirehoseSubscribeReposClient()
+        self.transformer = MessageTransformer()
 
     def extract_message(self, message):
         """Reads a message from the stream and prints the raw output if it is a post"""
@@ -29,15 +28,17 @@ class BlueSkyFirehose:
 
         for op in commit.ops:
             if op.action == "create" and op.cid:
-                raw = car.blocks.get(op.cid)
-                if not raw:
+                raw_message = car.blocks.get(op.cid)
+                if not raw_message:
                     continue
-                if raw.get("$type") == "app.bsky.feed.post":
-                    post_text = raw.get("text").lower()
-                    if any(topic in post_text for topic in self.topics):
-                        # Do transform  and load on each raw message extracted here.
-                        # Similar to how ETL was done in Museum Kafka.
-                        logging.info(raw)
+                if raw_message.get("$type") == "app.bsky.feed.post":
+                    try:
+                        message = Message(raw_message)
+                        clean_message = self.transformer.transform(message)
+                        if clean_message is not None:
+                            logging.info(clean_message)
+                    except MessageError as e:
+                        logging.exception(f"Message skipped:{e}")
 
     def start(self):
         """Starts the firehose stream"""
@@ -45,10 +46,5 @@ class BlueSkyFirehose:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "topics", help="Submit topics to track, separated by commas")
-    args = parser.parse_args()
-    topics = [topic.strip() for topic in args.topics.split(",")]
-    firehose = BlueSkyFirehose(topics)
+    firehose = BlueSkyFirehose()
     firehose.start()
