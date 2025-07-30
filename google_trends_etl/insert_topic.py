@@ -1,16 +1,21 @@
-import psycopg2
-from os import environ
-from dotenv import load_dotenv
+# pylint: disable=R0903
+"""Script to insert a user-entered topic into the RDS database."""
+
 import logging
+from os import environ
+import psycopg2
+from dotenv import load_dotenv
 
 logging.basicConfig(
     format="%(levelname)s | %(asctime)s | %(message)s", level=logging.INFO)
 
 class Connection():
+    """Handles loading environment variables and establishing a database connection."""
     def __init__(self):
         load_dotenv()
 
     def get_connection(self):
+        """Establishes a connection to the database."""
         try:
             logging.info("Connecting to the database.")
             conn = psycopg2.connect(
@@ -25,10 +30,12 @@ class Connection():
             raise
 
 class TopicInserter():
+    """Inserts user-defined topics into the 'bluesky.topic' table."""
     def __init__(self):
         self.db = Connection()
 
     def insert_topic(self, topic_name: str):
+        """Inserts a formatted topic name into the database."""
         topic_name = topic_name.strip().lower()
         if not topic_name:
             raise ValueError("No topic(s) entered.")
