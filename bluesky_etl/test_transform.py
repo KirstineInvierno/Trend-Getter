@@ -205,8 +205,6 @@ class TestMessageTransformer:
         # test with topics
         text_with_topics = "I love football and england is great"
         topics_found = transformer.find_topics_in_text(text_with_topics)
-        print("topics found: ")
-        print(topics_found)
 
         assert (1, 'football') in topics_found
         assert (2, 'england') in topics_found

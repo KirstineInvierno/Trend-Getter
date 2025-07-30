@@ -150,12 +150,11 @@ class MessageTransformer:
         logging.info(f"Matched topics in {round(time2-time1, 2)} seconds")
         return topics_found
 
-    def create_dataframe(self, topic_id: int, topic: str,
+    def create_dataframe(self, topic_id: int,
                          sentiment: dict, timestamp: datetime) -> pd.DataFrame:
         """Creates a single-row DataFrame with the given data"""
         logging.info("Creating DataFrame...")
         return pd.DataFrame({
-            "topic": [topic],
             "topic_id": [topic_id],
             "timestamp": [timestamp],
             "sentiment_label": [sentiment.get("label")],
@@ -183,7 +182,7 @@ class MessageTransformer:
 
         dataframes = []
         for topic in topics_found:
-            df = self.create_dataframe(*topic, sentiment, message.timestamp)
+            df = self.create_dataframe(topic[0], sentiment, message.timestamp)
             dataframes.append(df)
 
         time2 = time.time()

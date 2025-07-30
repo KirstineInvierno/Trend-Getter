@@ -3,11 +3,11 @@ This script loads a prepared message dataframe into the RDS database
 '''
 
 from os import environ
+import time
 import pandas as pd
 import sqlalchemy
 import psycopg2
 from dotenv import load_dotenv
-
 
 
 load_dotenv()
@@ -49,7 +49,12 @@ class DBLoader():
 if __name__ == '__main__':
     loader = DBLoader()
     df = pd.DataFrame()
+    time1 = time.time()
     print('connecting')
     con = loader.get_sql_conn()
-    print('connected')
+    time2 = time.time()
+    print(f'connected in {round(time2-time1, 2)} seconds')
+    print('uploading')
     loader.upload_df_to_mention(engine=con, df=df, schema='bluesky')
+    time3 = time.time()
+    print(f'uploaded in {round(time3-time2, 2)} seconds')
