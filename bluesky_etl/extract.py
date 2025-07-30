@@ -12,11 +12,11 @@ logging.basicConfig(
 class BlueSkyFirehose:
     """Tracks all Bluesky messages"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.client = FirehoseSubscribeReposClient()
         self.transformer = MessageTransformer()
 
-    def extract_message(self, message):
+    def extract_message(self, message) -> None:
         """Reads a message from the stream and prints the raw output if it is a post"""
 
         commit = parse_subscribe_repos_message(message)
@@ -40,7 +40,7 @@ class BlueSkyFirehose:
                     except MessageError as e:
                         logging.exception(f"Message skipped:{e}")
 
-    def start(self):
+    def start(self) -> None:
         """Starts the firehose stream"""
         self.client.start(self.extract_message)
 
