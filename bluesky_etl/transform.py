@@ -12,9 +12,11 @@ import time
 from dotenv import load_dotenv
 import logging
 import pandas as pd
+from pandas import DataFrame
 from transformers import pipeline
 from collections.abc import Callable
 import sqlalchemy
+from sqlalchemy import Engine
 
 TRANSFORMER_MODEL = "finiteautomata/bertweet-base-sentiment-analysis"
 load_dotenv()
@@ -33,8 +35,8 @@ class MessageError(Exception):
 class Utility:
 
     @staticmethod
-    def get_connection():
-        """returns a pscopg2 connection to the database"""
+    def get_connection() -> Engine:
+        """returns a sqlalchemy engine to connect to the database"""
         host = os.getenv("DB_HOST")
         user = os.getenv("DB_USER")
         password = os.getenv("DB_PASSWORD")
@@ -42,6 +44,14 @@ class Utility:
         engine = sqlalchemy.create_engine(
             f"postgresql+psycopg2://{user}:{password}@{host}/{database}")
         return engine
+
+    @staticmethod
+    def get_topics() -> DataFrame:
+        engine = Utility.get_connection()
+        topics = pd.read_sql_table(
+            'topic', con=engine, schema='bluesky')
+
+        return topics
 
 
 class Message:
@@ -100,13 +110,7 @@ class MessageTransformer:
         if self._topics is None:
             logging.info("Fetching topics from database...")
             time1 = time.time()
-            # self._topics = pd.DataFrame({
-            #     "topic_id": [1, 2, 3],
-            #     "topic": ["spain", "cricket", "trump"]
-            # })
-            engine = Utility.get_connection()
-            self._topics = pd.read_sql_table(
-                'topic', con=engine, schema='bluesky')
+            self._topics = Utility.get_topics()
             time2 = time.time()
             logging.info(f"Fetched topics in {round(time2-time1, 2)} seconds")
         return self._topics
@@ -139,8 +143,8 @@ class MessageTransformer:
         time1 = time.time()
         topics_found = []
         for topic_id in self.topics["topic_id"]:
-            topic = self.topics[self.topics["topic_id"]
-                                == topic_id]["topic_name"].reset_index()["topic_name"][0]
+            topic = self.topics[self.topics["topic_id"] == topic_id].reset_index()[
+                "topic_name"][0]
             if topic.lower() in text.lower():
                 topics_found.append((topic_id, topic))
         time2 = time.time()
