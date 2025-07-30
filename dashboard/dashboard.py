@@ -20,8 +20,8 @@ def phone_number_input() -> None:
         submit = st.form_submit_button("Submit phone number")
         if submit:
             if validate_phone_number(user_input):
-                inserter = PhoneNumberInserter()
-                result = inserter.insert_number(user_input)
+                phone_number_inserter = PhoneNumberInserter()
+                result = phone_number_inserter.insert_number(user_input)
                 if result is True:
                     st.write(f"phone number {user_input} submitted")
                 else:
@@ -31,5 +31,5 @@ def phone_number_input() -> None:
 
 
 if __name__ == "__main__":
-    st.title("Trendgetter Dashboard")
+    st.title("Trendgetter")
     phone_number_input()
