@@ -4,6 +4,7 @@
 import logging
 from os import environ
 import psycopg2
+from psycopg2.extensions import connection
 from dotenv import load_dotenv
 
 logging.basicConfig(
@@ -11,10 +12,10 @@ logging.basicConfig(
 
 class Connection():
     """Handles loading environment variables and establishing a database connection."""
-    def __init__(self):
+    def __init__(self) -> None:
         load_dotenv()
 
-    def get_connection(self):
+    def get_connection(self) -> connection:
         """Establishes a connection to the database."""
         try:
             logging.info("Connecting to the database.")
@@ -31,10 +32,10 @@ class Connection():
 
 class TopicInserter():
     """Inserts user-defined topics into the 'bluesky.topic' table."""
-    def __init__(self):
+    def __init__(self) -> None:
         self.db = Connection()
 
-    def insert_topic(self, topic_name: str):
+    def insert_topic(self, topic_name: str) -> None:
         """Inserts a formatted topic name into the database."""
         topic_name = topic_name.strip().lower()
         if not topic_name:
