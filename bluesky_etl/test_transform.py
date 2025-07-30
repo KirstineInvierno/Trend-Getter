@@ -262,7 +262,6 @@ class TestMessageTransformer:
     @patch('transform.pipeline')
     def test_transform_no_topics_found(self, mock_pipeline, transformer):
         """Test transformation when no topics are found"""
-        # message with no matching topics
         message_dict = {
             'text': 'I love cats and dogs',
             'langs': ['en'],
@@ -284,7 +283,6 @@ class TestMessageTransformer:
             {'label': 'POS', 'score': 0.8}
         ]
 
-        # message with multiple topics
         message_dict = {
             'text': 'football and cricket and england are great',
             'langs': ['en'],
