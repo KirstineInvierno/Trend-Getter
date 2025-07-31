@@ -5,9 +5,9 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket         = "your-terraform-state-bucket"
-    key            = "terraform/terraform.tfstate"
-    region         = "eu-west-2"
+    bucket = "your-terraform-state-bucket"
+    key    = "terraform/terraform.tfstate"
+    region = "eu-west-2"
   }
 }
 
