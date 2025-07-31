@@ -105,8 +105,8 @@ if __name__ == '__main__':
     st.title('Google Search Trends')
 
     initialise_session_state_dataframes()
-    st.text('''Please Input a topic to see the relevant search
-                trends over the last year and the last week.''')
+    st.text('Please Input a topic to see the relevant search '
+            'trends over the last year and the last week.')
     input_topic = topic_input()
 
     if input_topic:
