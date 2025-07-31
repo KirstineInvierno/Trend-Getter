@@ -5,7 +5,7 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket = "your-terraform-state-bucket"
+    bucket = "c18-trend-getter-state-bucket"
     key    = "terraform/terraform.tfstate"
     region = "eu-west-2"
   }
