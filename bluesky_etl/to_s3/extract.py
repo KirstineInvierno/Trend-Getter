@@ -1,7 +1,8 @@
 """Extract script to read live data from the Bluesky firehose API"""
 import logging
 from atproto import FirehoseSubscribeReposClient, parse_subscribe_repos_message, CAR, models
-from transform_oop import Message, MessageTransformer, MessageError
+from utilities import Message
+from load_s3 import S3Loader
 
 logging.basicConfig(
     level=logging.INFO,
@@ -14,7 +15,6 @@ class BlueSkyFirehose:
 
     def __init__(self) -> None:
         self.client = FirehoseSubscribeReposClient()
-        self.transformer = MessageTransformer()
 
     def extract_message(self, message) -> None:
         """Reads a message from the stream and prints the raw output if it is a post"""
@@ -31,14 +31,11 @@ class BlueSkyFirehose:
                 raw_message = car.blocks.get(op.cid)
                 if not raw_message:
                     continue
-                if raw_message.get("$type") == "app.bsky.feed.post":
-                    try:
-                        message = Message(raw_message)
-                        clean_message = self.transformer.transform(message)
-                        if clean_message is not None:
-                            logging.info(clean_message)
-                    except MessageError as e:
-                        logging.exception(f"Message skipped:{e}")
+                if raw_message.get("$type") == "app.bsky.feed.post" \
+                    and raw_message.get("langs") \
+                        and "en" in raw_message.get("langs"):
+                    message_obj = Message(raw_message)
+                    S3Loader.load_to_s3(message_obj)
 
     def start(self) -> None:
         """Starts the firehose stream"""
