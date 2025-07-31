@@ -6,7 +6,7 @@ CREATE SCHEMA bluesky;
 
 CREATE TABLE bluesky.users (
     user_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    email TEXT UNIQUE NOT NULL CHECK(email LIKE '%_@_%._%'),
+    email TEXT UNIQUE CHECK(email LIKE '%_@_%._%'),
     phone_number TEXT UNIQUE NOT NULL
 );
 
