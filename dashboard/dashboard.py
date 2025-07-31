@@ -1,3 +1,4 @@
+"""This is the dashboard that will visualise topic trends from bluesky and pytrends"""
 import streamlit as st
 import re
 from insert_phone_number import PhoneNumberInserter

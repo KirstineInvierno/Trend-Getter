@@ -9,7 +9,7 @@ logging.basicConfig(
 
 
 class SubscriptionInserter():
-    """Subscribes a user to a topic if they are not already subscribied"""
+    """Subscribes a user to a topic if they are not already subscribed"""
 
     def __init__(self) -> None:
         self.db = Connection()
