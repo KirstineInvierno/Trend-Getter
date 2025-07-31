@@ -81,3 +81,9 @@ resource "aws_db_instance" "postgresql" {
   backup_retention_period = 7
   deletion_protection     = false
 }
+
+
+resource "aws_s3_bucket" "trendy-s3" {
+  bucket = "c18-trendy-s3"
+
+}
