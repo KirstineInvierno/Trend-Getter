@@ -76,27 +76,37 @@ def increment_counter():
     st.session_state.count += 1
 
 
+@st.cache_data
+def concat_dfs(df1, df2):
+    return pd.concat(df1, df2)
+
+
 if __name__ == '__main__':
-    if 'dfs_to_be_made' not in st.session_state:
-        st.session_state.dfs_to_be_made = True
+    if 'weekly_df' not in st.session_state:
+        st.session_state.weekly_df = pd.DataFrame(
+            data={'date': [1], 'topic_name': [1], 'hits': [1]})
     if 'count' not in st.session_state:
         st.session_state.count = 0
-
+    st.text(st.session_state.count)
     if st.session_state.count == 0:
         weekly_df = pd.DataFrame(
             data={'date': [1], 'topic_name': [1], 'hits': [1]})
         daily_df = pd.DataFrame(
-            data={'date': [], 'topic_name': [], 'hits': []})
+            data={'date': [2], 'topic_name': [2], 'hits': [2]})
         increment_counter()
-
+    st.text(st.session_state.count)
     topic = st.text_input(
-        'Input a Topic to View', on_change=get_trends_data)
+        'Input a Topic to View')
+    # st.dataframe(daily_df)
+    st.dataframe(st.session_state.weekly_df)
 
     if topic:
-        dfs = get_trends_data()
-        weekly_df = pd.concat(weekly_df, dfs[0], dfs[1])
+        # dfs = get_trends_data()
+        st.session_state.weekly_df = pd.concat([
+            st.session_state.weekly_df, st.session_state.weekly_df])
 
-        st.dataframe(weekly_df)
-        st.dataframe(daily_df)
-        weekly_line_chart(weekly_df)
-        daily_line_chart(daily_df)
+        st.dataframe(st.session_state.weekly_df)
+        # st.dataframe(daily_df)
+        weekly_line_chart(st.session_state.weekly_df)
+        # daily_line_chart(daily_df)
+        st.text(st.session_state.count)
