@@ -71,7 +71,7 @@ class MessageTransformer:
     def __init__(self, sentiment_model: str = TRANSFORMER_MODEL):
         self.sentiment_model = sentiment_model
         self._sentiment_pipeline = None
-        self._topics = None
+        self._topics = topics_dict
 
     @property
     def sentiment_pipeline(self) -> Callable:
@@ -80,19 +80,19 @@ class MessageTransformer:
             self._sentiment_pipeline = pipeline(model=self.sentiment_model)
         return self._sentiment_pipeline
 
-    @property
-    def topics(self) -> pd.DataFrame:
-        """Lazy loading topics"""
-        if self._topics is None:
-            logging.info("Fetching topics from database...")
-            time1 = time.time()
-            self._topics = pd.DataFrame({
-                "topic_id": [1, 2, 3, 4, 5],
-                "topic": ["football", "england", "spain", "cricket", "trump"]
-            })
-            time2 = time.time()
-            logging.info(f"Fetched topics in {round(time2-time1, 2)} seconds")
-        return self._topics
+    # @property
+    # def topics(self) -> pd.DataFrame:
+    #     """Lazy loading topics"""
+    #     if self._topics is None:
+    #         logging.info("Fetching topics from database...")
+    #         time1 = time.time()
+    #         self._topics = pd.DataFrame({
+    #             "topic_id": [1, 2, 3, 4, 5, 6],
+    #             "topic": ["football", "england", "spain", "cricket", "trump", 'a']
+    #         })
+    #         time2 = time.time()
+    #         logging.info(f"Fetched topics in {round(time2-time1, 2)} seconds")
+    #     return self._topics
 
     def get_sentiment(self, text: str) -> dict:
         """
