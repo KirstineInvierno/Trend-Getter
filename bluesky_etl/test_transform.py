@@ -231,11 +231,11 @@ class TestMessageTransformer:
         sentiment = {'label': 'POS', 'score': 0.8}
         timestamp = datetime(2025, 7, 28, 12, 36, 42)
 
-        df = transformer.create_dataframe(1, "football", sentiment, timestamp)
+        df = transformer.create_dataframe(1, sentiment, timestamp)
 
         assert isinstance(df, pd.DataFrame)
         assert len(df) == 1
-        assert df.iloc[0]['topic'] == 'football'
+        assert df.iloc[0]['topic_id'] == 1
         assert df.iloc[0]['sentiment_label'] == 'POS'
         assert df.iloc[0]['sentiment_score'] == 0.8
         assert df.iloc[0]['timestamp'] == timestamp
@@ -254,7 +254,7 @@ class TestMessageTransformer:
 
         assert isinstance(result, pd.DataFrame)
         assert len(result) >= 1
-        assert 'topic' in result.columns
+        assert 'topic_id' in result.columns
         assert 'timestamp' in result.columns
         assert 'sentiment_label' in result.columns
         assert 'sentiment_score' in result.columns
@@ -297,10 +297,10 @@ class TestMessageTransformer:
         # should have football, cricket, england
         assert len(result) == 3
 
-        topics_in_result = result['topic'].tolist()
-        assert 'football' in topics_in_result
-        assert 'cricket' in topics_in_result
-        assert 'england' in topics_in_result
+        topics_in_result = result['topic_id'].tolist()
+        assert 1 in topics_in_result
+        assert 2 in topics_in_result
+        assert 4 in topics_in_result
 
 
 class TestIntegration:
@@ -347,4 +347,4 @@ class TestIntegration:
         assert len(result) == 2  # trump and football
         assert all(result['sentiment_label'] == 'POS')
         assert all(result['sentiment_score'] == 0.85)
-        assert result['topic'].tolist() == ['football', 'trump']
+        assert result['topic_id'].tolist() == [1, 5]
