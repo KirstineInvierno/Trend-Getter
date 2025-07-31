@@ -174,3 +174,27 @@ resource "aws_instance" "ec2" {
     Name = "c18-trend-getter-extract-load-ec2"
   }
 }
+
+# policies for lambda
+# s3 permissions
+# rds permissions
+# sns permissions
+
+
+# eventbridge
+
+resource "aws_scheduler_schedule" "trans-form-and-load" {
+  name = "c18-trend-getter-transform-and-load-scheduler"
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  schedule_expression          = "cron(5 * * * ? *)"
+
+  target {
+    arn      = # put arn of lambda here
+    role_arn = # put lambda function role here
+  }
+
+}
