@@ -154,12 +154,12 @@ resource "aws_security_group" "trend-getter-ec2-sg" {
 
 
 resource "aws_instance" "ec2" {
-  ami                         = "ami-0f4f4482537714bd9" 
+  ami                         = "ami-0f4f4482537714bd9"
   instance_type               = "t3.nano"
-  subnet_id                   = data.aws_subnet.public_1.id  
+  subnet_id                   = data.aws_subnet.public_1.id
   associate_public_ip_address = true
   key_name                    = aws_key_pair.trend-getter-ec2-key.key_name
-  vpc_security_group_ids = [aws_security_group.trend-getter-ec2-sg.id]
+  vpc_security_group_ids      = [aws_security_group.trend-getter-ec2-sg.id]
 
   tags = {
     Name = "c18-trend-getter-extract-load-ec2"
