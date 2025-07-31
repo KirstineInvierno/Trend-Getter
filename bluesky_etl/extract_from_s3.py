@@ -83,7 +83,8 @@ def get_topics_dict_from_rds(loader: DBLoader):
 
 if __name__ == "__main__":
     loader = DBLoader()
-    print(get_topics_dict_from_rds(loader))
+
+    topics_dict = get_topics_dict_from_rds(loader)
 
     s3 = get_s3_connection()
     file_list = get_recent_file_names(s3, 'c18-trend-getter-s3')
@@ -95,7 +96,7 @@ if __name__ == "__main__":
 
     t1 = time.time()
     list_of_jsons = get_json_list(recent_files, s3, 'c18-trend-getter-s3')
-    transformer = MessageTransformer()
+    transformer = MessageTransformer(topics_dict)
     transformed_list = []
     t2 = time.time()
     for item in list_of_jsons:

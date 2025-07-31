@@ -68,7 +68,7 @@ class Message:
 class MessageTransformer:
     """Transforms API messages into DataFrames for database loading"""
 
-    def __init__(self, sentiment_model: str = TRANSFORMER_MODEL):
+    def __init__(self, topics_dict: dict, sentiment_model: str = TRANSFORMER_MODEL):
         self.sentiment_model = sentiment_model
         self._sentiment_pipeline = None
         self._topics = topics_dict
