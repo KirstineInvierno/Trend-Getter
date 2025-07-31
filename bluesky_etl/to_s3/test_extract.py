@@ -2,7 +2,7 @@
 import logging
 from unittest.mock import MagicMock, patch
 from atproto import models
-from transform_oop import Message, MessageTransformer, MessageError
+from utilities import MessageError
 from extract import BlueSkyFirehose
 
 
