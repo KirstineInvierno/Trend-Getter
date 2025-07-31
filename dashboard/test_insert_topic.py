@@ -47,3 +47,44 @@ class TestTopicInserter():
         assert inserter.format_topic("CHocoLate") == "chocolate"
         assert inserter.format_topic("WATCH") == "watch"
         assert inserter.format_topic("Perfume") == "perfume"
+    
+    @patch("insert_topic.Connection")
+    def test_insert_topic_executes_query(self, mock_connection_class):
+        """Test that a topic is inserted into the database."""
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_connection_class.return_value.get_connection.return_value = mock_conn
+        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+
+        inserter = TopicInserter()
+
+        inserter.insert_topic("testtopic")
+
+        mock_cursor.execute.assert_called_once_with(
+            """INSERT INTO bluesky.topic (topic_name)
+                                VALUES (%s)
+                                ON CONFLICT (topic_name) DO NOTHING;""",
+            ("testtopic",)
+        )
+        mock_conn.close.assert_called_once()
+
+    @patch("insert_topic.Connection")
+    def test_insert_duplicate_topic_does_not_error(self, mock_connection_class):
+        """Test that inserting the same topic twice does not raise an error and executes the query twice."""
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_connection_class.return_value.get_connection.return_value = mock_conn
+        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+
+        inserter = TopicInserter()
+
+        inserter.insert_topic("testtopic")
+        inserter.insert_topic("testtopic")
+
+        query = """INSERT INTO bluesky.topic (topic_name)
+                                VALUES (%s)
+                                ON CONFLICT (topic_name) DO NOTHING;"""
+        expected_args = ("testtopic",)
+
+        assert mock_cursor.execute.call_count == 2
+        mock_cursor.execute.assert_called_with(query, expected_args)
