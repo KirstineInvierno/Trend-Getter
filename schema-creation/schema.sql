@@ -1,4 +1,4 @@
-DROP SCHEMA IF EXISTS bluesky;
+DROP SCHEMA IF EXISTS bluesky CASCADE;
 
 
 CREATE SCHEMA bluesky;
@@ -20,8 +20,8 @@ CREATE TABLE bluesky.user_topic (
     user_id INT NOT NULL,
     topic_id INT NOT NULL,
     active BOOLEAN NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users (user_id),
-    FOREIGN KEY (topic_id) REFERENCES topic (topic_id)
+    FOREIGN KEY (user_id) REFERENCES bluesky.users (user_id) ON DELETE CASCADE,
+    FOREIGN KEY (topic_id) REFERENCES bluesky.topic (topic_id) ON DELETE CASCADE
 );
 
 CREATE TABLE bluesky.mention(
@@ -30,6 +30,6 @@ CREATE TABLE bluesky.mention(
     timestamp TIMESTAMP NOT NULL,
     sentiment_label TEXT NOT NULL,
     sentiment_score FLOAT(53) NOT NULL,
-    FOREIGN KEY(topic_id) REFERENCES topic (topic_id)
+    FOREIGN KEY(topic_id) REFERENCES bluesky.topic (topic_id) ON DELETE CASCADE
 );
 

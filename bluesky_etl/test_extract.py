@@ -2,7 +2,7 @@
 import logging
 from unittest.mock import MagicMock, patch
 from atproto import models
-
+from transform_oop import Message, MessageTransformer, MessageError
 from extract import BlueSkyFirehose
 
 
@@ -21,13 +21,14 @@ def make_mock_commit(post_text: list[str]):
     return mock_commit, mock_raw
 
 
-def test_extract_message_logs_when_topic_found(caplog):
-    topics = ["football"]
-    post_text = "love football"
-    firehose = BlueSkyFirehose(topics)
+def test_extract_message_logs_when_valid_message(caplog):
+    post_text = "I love football"
+    firehose = BlueSkyFirehose()
 
     with patch("extract.parse_subscribe_repos_message") as mock_parse_sub, \
-            patch("extract.CAR") as mock_car_func:
+            patch("extract.CAR") as mock_car_func, \
+            patch("extract.MessageTransformer.transform") as mock_transform, \
+            patch("extract.Message") as mock_message:
 
         mock_commit, mock_raw = make_mock_commit(post_text)
         mock_parse_sub.return_value = mock_commit
@@ -36,30 +37,35 @@ def test_extract_message_logs_when_topic_found(caplog):
         mock_car.blocks.get.return_value = mock_raw
         mock_car_func.from_bytes.return_value = mock_car
 
+        mock_transform.return_value = {"text": post_text}
+
         with caplog.at_level(logging.INFO):
             firehose.extract_message("test")
 
         assert len(caplog.records) == 1
-        assert topics[0] in caplog.text
+        assert "I love football" in caplog.text
 
 
-def test_dont_extract_message_logs_when_topic_not_found(caplog):
-    topics = ["life"]
-    post_text = "i love football"
-    firehose = BlueSkyFirehose(topics)
+def test_extract_message_logs_when_skipping_invalid_message(caplog):
+    post_text = "japanese"
+    firehose = BlueSkyFirehose()
 
-    with patch("extract.parse_subscribe_repos_message") as mock_parse, \
-            patch("extract.CAR") as mock_car_func:
+    with patch("extract.parse_subscribe_repos_message") as mock_parse_sub, \
+            patch("extract.CAR") as mock_car_func, \
+            patch("extract.Message") as mock_message:
 
         mock_commit, mock_raw = make_mock_commit(post_text)
-        mock_parse.return_value = mock_commit
+        mock_parse_sub.return_value = mock_commit
 
         mock_car = MagicMock()
         mock_car.blocks.get.return_value = mock_raw
         mock_car_func.from_bytes.return_value = mock_car
 
-        with caplog.at_level(logging.INFO):
+        mock_message.side_effect = MessageError("Message must be in english")
+
+        with caplog.at_level(logging.ERROR):
             firehose.extract_message("test")
 
-        assert len(caplog.records) == 0
-        assert topics[0] not in caplog.text
+        assert len(caplog.records) == 1
+
+        assert "Message skipped" in caplog.records[0].message

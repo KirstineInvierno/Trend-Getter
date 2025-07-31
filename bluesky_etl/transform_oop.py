@@ -51,6 +51,9 @@ class Message:
             if field not in message_dict:
                 raise MessageError(
                     f"Your message is missing the required field: {field} ")
+        if "en" not in message_dict["langs"]:
+            raise MessageError(
+                f"Message must be in english ")
 
     @property
     def timestamp(self) -> datetime:
