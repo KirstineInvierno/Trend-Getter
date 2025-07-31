@@ -174,3 +174,10 @@ resource "aws_instance" "ec2" {
     Name = "c18-trend-getter-extract-load-ec2"
   }
 }
+
+
+# SNS
+
+resource "aws_sns_topic" "user_notifications" {
+  name = "c18-trend-getter-sns"
+}
