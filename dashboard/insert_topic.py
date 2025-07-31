@@ -27,6 +27,7 @@ class Connection():
                 password=environ["DB_PASSWORD"],
                 dbname=environ["DB_NAME"]
             )
+            logging.info("Successfully connected.")
             return conn
         except Exception as e:
             logging.error("Database connection failed: %s", e)
@@ -39,12 +40,15 @@ class TopicInserter():
     def __init__(self) -> None:
         self.db = Connection()
 
-    def insert_topic(self, topic_name: str) -> None:
-        """Inserts a formatted topic name into the database."""
+    def format_topic(self, topic_name: str) -> str:
+        """Formats a topic name to remove whitespace and capitalisation."""
         topic_name = topic_name.strip().lower()
         if not topic_name:
             raise ValueError("No topic(s) entered.")
+        return topic_name
 
+    def insert_topic(self, topic_name: str) -> None:
+        """Inserts a formatted topic name into the database."""
         conn = self.db.get_connection()
         try:
             with conn:
