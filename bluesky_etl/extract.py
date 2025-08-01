@@ -1,7 +1,7 @@
 """Extract script to read live data from the Bluesky firehose API"""
 import logging
 from atproto import FirehoseSubscribeReposClient, parse_subscribe_repos_message, CAR, models
-from transform_oop import Message, MessageTransformer, MessageError
+from transform import Message, MessageTransformer, MessageError
 
 logging.basicConfig(
     level=logging.INFO,

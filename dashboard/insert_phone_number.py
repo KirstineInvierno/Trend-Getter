@@ -13,21 +13,25 @@ class PhoneNumberInserter():
         """Initialises connection to the database"""
         self.db = Connection()
 
-    def insert_number(self, phone_number: str) -> bool:
-        """Returns False if phone number already exists. 
-        Otherwise, inserts the phone number into the RDS and returns True"""
+    def insert_number(self, phone_number: str) -> int:
+        """Inserts a phone number into the database and returns the user id.
+          If the phone number already exists, the user id of the existing user will be returned"""
 
         conn = self.db.get_connection()
         try:
             with conn:
                 with conn.cursor() as cur:
-                    cur.execute(("""SELECT * from bluesky.users 
+                    cur.execute(("""SELECT user_id from bluesky.users 
                                 WHERE phone_number = %s;"""), (phone_number,))
-                    if cur.fetchone():
-                        return False
+                    user_id = cur.fetchone()
+                    if user_id:
+                        return user_id[0]
                     cur.execute(("""INSERT INTO bluesky.users (phone_number)
-                                VALUES (%s);"""), (phone_number,))
-                    return True
+                                VALUES (%s)
+                                RETURNING user_id;"""), (phone_number,))
+                    user_id = cur.fetchone()
+                    return user_id[0]
+
         except Exception as e:
             logging.error("Insert failed: %s", e)
             raise
