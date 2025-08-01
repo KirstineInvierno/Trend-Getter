@@ -8,6 +8,7 @@ from typing import Any
 inserter = TopicInserter()
 conn = Connection()
 
+
 class TestConnection():
     """Tests for the Connection class handling database connections."""
     @patch("psycopg2.connect", side_effect=Exception("Connection error"))
@@ -26,8 +27,10 @@ class TestConnection():
         assert mock_connect.call_count == 1
         assert "Successfully connected." in caplog.text
 
+
 class TestTopicInserter():
     """Tests for the TopicInserter class handling topic formatting."""
+
     def test_format_topic_with_spaces(self) -> None:
         """Test that format_topic removes whitespace."""
         assert inserter.format_topic("  chocolate ") == "chocolate"
@@ -88,3 +91,41 @@ class TestTopicInserter():
 
         assert mock_cursor.execute.call_count == 2
         mock_cursor.execute.assert_called_with(query, expected_args)
+
+    @patch("insert_topic.Connection.get_connection")
+    def test_insert_new_topic(self, mock_get_conn):
+        """Tests that a new topic is added into the database"""
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+
+        mock_get_conn.return_value = mock_conn
+        mock_conn.__enter__.return_value = mock_conn
+        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+
+        mock_cursor.fetchone.side_effect = [None, (123,)]
+
+        inserter = TopicInserter()
+
+        result = inserter.insert_topic("liverpool ")
+
+        assert result == 123
+        assert mock_cursor.execute.call_count == 2
+
+    @patch("insert_topic.Connection.get_connection")
+    def test_insert_existing_topic(self, mock_get_conn):
+        """Tests that an existing topic is returned from the database"""
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+
+        mock_get_conn.return_value = mock_conn
+        mock_conn.__enter__.return_value = mock_conn
+        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+
+        mock_cursor.fetchone.return_value = (1,)
+
+        inserter = TopicInserter()
+
+        result = inserter.insert_topic("liverpool ")
+
+        assert result == 1
+        assert mock_cursor.execute.call_count == 1
