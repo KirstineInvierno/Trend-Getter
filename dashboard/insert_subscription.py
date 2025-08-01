@@ -15,10 +15,10 @@ class SubscriptionInserter():
     def __init__(self) -> None:
         self.db = Connection()
 
-    def insert_subscription(self, user_id: int, topic_id: int) -> bool:
+    def insert_subscription(self, user_id: int, topic_id: int, threshold: int) -> bool:
         """Inserts a subscription into the database and returns True
-           if the subscription is successfully inserted. Returns
-           False if the subscription already exists."""
+           if the subscription is successfully inserted. If the subscription already
+           exists, the threshold is updated and returns False."""
         conn = self.db.get_connection()
         try:
             with conn:
@@ -28,12 +28,15 @@ class SubscriptionInserter():
                        WHERE user_id = %s AND topic_id = %s;
                    """, (user_id, topic_id))
                     if cur.fetchone():
+                        cur.execute("""UPDATE bluesky.user_topic
+                                    SET threshold = %s
+                                    WHERE user_id = %s and topic_id = %s;""", (threshold, user_id, topic_id))
                         return False
 
                     cur.execute("""
-                       INSERT INTO bluesky.user_topic (user_id, topic_id,active)
-                       VALUES (%s, %s,TRUE);
-                   """, (user_id, topic_id))
+                       INSERT INTO bluesky.user_topic (user_id, topic_id,active,threshold)
+                       VALUES (%s, %s,TRUE,%s);
+                   """, (user_id, topic_id, threshold))
                     return True
         except Exception as e:
             logging.error("Subscription insert failed: %s", e)
