@@ -15,8 +15,35 @@ def validate_phone_number(phone_number: str) -> bool:
         return False
 
 
+def unsubscribe() -> None:
+    """Allows a user to enter their phone number and unsubscribe to a topic"""
+    phone_input = st.text_input("Enter phone number to manage subscriptions:")
+    if phone_input and validate_phone_number(phone_input):
+        phone_number_inserter = PhoneNumberInserter()
+        user_id = phone_number_inserter.get_user_id(phone_input)
+        if user_id == -1:
+            st.error("phone number not found")
+            return
+        subscription_inserter = SubscriptionInserter()
+        subscribed_topics = subscription_inserter.get_subscriptions(user_id)
+        if subscribed_topics:
+            unsubscribed_topic = st.selectbox(
+                "Select topic to unsubscribe from:", subscribed_topics)
+            if st.button("unsubscribe"):
+                removed = subscription_inserter.unsubscribe(
+                    user_id, unsubscribed_topic)
+                if removed:
+                    st.success(
+                        f"You have unsubscribed from {unsubscribed_topic}")
+                else:
+                    st.error(
+                        f"Unsubscription from {unsubscribed_topic} failed.")
+        else:
+            st.info("You are not subscribed to anything")
+
+
 def subscription() -> None:
-    """Takes a phone number and a topic and subscribes the user to the topic if they 
+    """Takes a phone number and a topic and subscribes the user to the topic if they
     are not already subscribed."""
     with st.form("Subscribe form"):
         phone_input = st.text_input("Enter phone number:")
@@ -26,6 +53,7 @@ def subscription() -> None:
             if validate_phone_number(phone_input):
                 phone_number_inserter = PhoneNumberInserter()
                 user_id = phone_number_inserter.insert_number(phone_input)
+
                 topic_inserter = TopicInserter()
                 topic_id = topic_inserter.insert_topic(topic_input)
                 subscription_inserter = SubscriptionInserter()
@@ -45,4 +73,11 @@ def subscription() -> None:
 
 if __name__ == "__main__":
     st.title("Trendgetter")
-    subscription()
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.header("Subscribe")
+        subscription()
+    with col2:
+        st.header("Unsubscribe")
+        unsubscribe()
