@@ -61,11 +61,8 @@ class TopicInserter():
                     topic_id = cur.fetchone()
 
                     if not topic_id:
-                        cur.execute("""
-                            INSERT INTO bluesky.topic (topic_name)
-                            VALUES (%s)
-                            RETURNING topic_id;
-                        """, (topic_name,))
+                        cur.execute("""INSERT INTO bluesky.topic (topic_name)
+                                    VALUES (%s) RETURNING topic_id;""", (topic_name,))
                         topic_id = cur.fetchone()
                     if not topic_id:
                         raise RuntimeError(f"Failed to insert or retrieve topic: {topic_name}")
