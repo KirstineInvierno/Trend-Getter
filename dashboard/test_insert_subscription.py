@@ -21,7 +21,7 @@ class TestSubscriptionInserter():
         mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
 
         mock_cursor.fetchone.return_value = None
-        result = inserter.insert_subscription(1, 2)
+        result = inserter.insert_subscription(1, 2, 3)
         assert result is True
 
     @patch("insert_subscription.Connection.get_connection")
@@ -34,7 +34,7 @@ class TestSubscriptionInserter():
         mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
 
         mock_cursor.fetchone.return_value = [(1,)]
-        result = inserter.insert_subscription(1, 2)
+        result = inserter.insert_subscription(1, 2, 3)
         assert result is False
 
     @patch("insert_subscription.Connection.get_connection")

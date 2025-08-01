@@ -60,11 +60,13 @@ def unsubscribe() -> None:
 
 
 def subscription() -> None:
-    """Takes a phone number and a topic and subscribes the user to the topic if they
-    are not already subscribed."""
+    """Takes a phone number, topic and a threshold, and subscribes the user to the topic if they
+    are not already subscribed. If the user is already subscribed, the threshold is updated."""
     with st.form("Subscribe form"):
         phone_input = st.text_input("Enter phone number:")
         topic_input = st.text_input("Subscribe to a topic:")
+        threshold_input = st.text_input(
+            "Enter a threshold of mentions for a 10 minute interval:")
         submit = st.form_submit_button("Submit")
         if submit:
             if validate_phone_number(phone_input):
@@ -76,13 +78,13 @@ def subscription() -> None:
                     topic_id = topic_inserter.insert_topic(topic_input)
                     subscription_inserter = SubscriptionInserter()
                     added = subscription_inserter.insert_subscription(
-                        user_id, topic_id)
+                        user_id, topic_id, int(threshold_input))
                     if added:
                         st.success(
-                            f"{phone_input} has subscribed to {topic_input}")
+                            f"{phone_input} has subscribed to {topic_input} and will be notified when there are more than {threshold_input} mentions in a 10 minute interval")
                     else:
                         st.info(
-                            f"{phone_input} is already subscribed to  {topic_input}")
+                            f"{phone_input} is already subscribed to  {topic_input}. Threshold set to {threshold_input}")
                 except Exception as e:
                     st.error(
                         f"An error occured while subscribing to a topic.")
