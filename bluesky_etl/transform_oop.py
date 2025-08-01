@@ -80,20 +80,6 @@ class MessageTransformer:
             self._sentiment_pipeline = pipeline(model=self.sentiment_model)
         return self._sentiment_pipeline
 
-    # @property
-    # def topics(self) -> pd.DataFrame:
-    #     """Lazy loading topics"""
-    #     if self._topics is None:
-    #         logging.info("Fetching topics from database...")
-    #         time1 = time.time()
-    #         self._topics = pd.DataFrame({
-    #             "topic_id": [1, 2, 3, 4, 5, 6],
-    #             "topic": ["football", "england", "spain", "cricket", "trump", 'a']
-    #         })
-    #         time2 = time.time()
-    #         logging.info(f"Fetched topics in {round(time2-time1, 2)} seconds")
-    #     return self._topics
-
     def get_sentiment(self, text: str) -> dict:
         """
         Analyzes text sentiment using transformer model
@@ -120,17 +106,17 @@ class MessageTransformer:
         logging.info("Matching topics in topics list...")
         topics_found = []
 
-        for topic in self.topics["topic"]:
+        for topic in self._topics.keys():
             if topic.lower() in text.lower():
                 topics_found.append(topic)
 
         return topics_found
 
-    def create_dataframe(self, topic: str, sentiment: dict, timestamp: datetime) -> pd.DataFrame:
+    def create_dataframe(self, topic_id: str, sentiment: dict, timestamp: datetime) -> pd.DataFrame:
         """Creates a single-row DataFrame with the given data"""
         logging.info("Creating DataFrame...")
         return pd.DataFrame({
-            "topic": [topic],
+            "topic_id": [topic_id],
             "timestamp": [timestamp],
             "sentiment_label": [sentiment.get("label")],
             "sentiment_score": [sentiment.get("score")]
@@ -157,7 +143,8 @@ class MessageTransformer:
 
         dataframes = []
         for topic in topics_found:
-            df = self.create_dataframe(topic, sentiment, message.timestamp)
+            df = self.create_dataframe(
+                self._topics[topic], sentiment, message.timestamp)
             dataframes.append(df)
 
         time2 = time.time()
