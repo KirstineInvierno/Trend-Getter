@@ -9,7 +9,7 @@ inserter = SubscriptionInserter()
 
 
 class TestSubscriptionInserter():
-    """Tests for the TopicInserter class handling topic formatting."""
+    """Tests for the SubscriptionInserter class"""
 
     @patch("insert_subscription.Connection.get_connection")
     def test_insert_new_subscription(self, mock_get_conn) -> None:

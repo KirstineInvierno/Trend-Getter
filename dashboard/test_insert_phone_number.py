@@ -8,8 +8,8 @@ from typing import Any
 inserter = PhoneNumberInserter()
 
 
-class TestNumberInserter():
-    """Tests for the TopicInserter class handling topic formatting."""
+class TestPhoneNumberInserter():
+    """Tests for the PhoneNumberInserter class"""
 
     @patch("insert_phone_number.Connection.get_connection")
     def test_get_user_id(self, mock_get_conn) -> None:
@@ -38,7 +38,7 @@ class TestNumberInserter():
         assert inserter.get_user_id("07599095847") == -1
 
     @patch("insert_phone_number.Connection.get_connection")
-    def test_insert_phone_number(self, mock_get_conn):
+    def test_insert_phone_number(self, mock_get_conn) -> None:
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
 
@@ -54,7 +54,7 @@ class TestNumberInserter():
         assert mock_cursor.execute.call_count == 2
 
     @patch("insert_phone_number.Connection.get_connection")
-    def test_phone_number_exists(self, mock_get_conn):
+    def test_phone_number_exists(self, mock_get_conn) -> None:
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
 

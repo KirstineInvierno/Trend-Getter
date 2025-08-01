@@ -52,7 +52,7 @@ class TestTopicInserter():
         assert inserter.format_topic("Perfume") == "perfume"
 
     @patch("insert_topic.Connection.get_connection")
-    def test_insert_new_topic(self, mock_get_conn):
+    def test_insert_new_topic(self, mock_get_conn) -> None:
         """Tests that a new topic is added into the database"""
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
@@ -71,7 +71,7 @@ class TestTopicInserter():
         assert mock_cursor.execute.call_count == 2
 
     @patch("insert_topic.Connection.get_connection")
-    def test_insert_existing_topic(self, mock_get_conn):
+    def test_insert_existing_topic(self, mock_get_conn) -> None:
         """Tests that an existing topic is returned from the database"""
         mock_conn = MagicMock()
         mock_cursor = MagicMock()
