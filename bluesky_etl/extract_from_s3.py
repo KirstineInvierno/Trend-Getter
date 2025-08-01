@@ -126,4 +126,4 @@ if __name__ == "__main__":
     t3 = time.time()
     print(
         f'Files imported: {len(file_list)}, {t2-t1} seconds, messages transformed: {len(df_for_load)}, {t3-t2} seconds, total: {t3-t1} seconds')
-    print(df)
+    print(df_for_load)
