@@ -16,9 +16,30 @@ Create a tool that allows users to select topics/tags on key sites (Google Trend
 - Notifications for changes in activity will be sent to subscribers.
 
 ## Architecture
-
-## ERD
-
+ ### Architecture Diagram
+ ![alt text for screen readers](./architecture.png "Architecture Diagram")
+ ### Decisions
+ #### Data Storage
+ - For our service, we require the keeping of records of every message which hits one of our tracked topics, and the corresponding sentiment. 
+ - Further, we require data on each of our users and which topics they are subscribed to.
+ - For this we used a Postgres RDS instance, due to the automatic scaling and the volume of transactional queries required for the maintenance of user subscription records.
+ - While the columnar queries generally used to produce visualizations are more expensive than if we had chosen a data-warehouse-style storage solution, we believe that the RDS will be better value overall.
+ #### Extracting the data
+ - To keep up with the volume of messages provided by the BlueSky firehose (around 4500/minute), we decided on a batch processing pipeline to extract and transform our data, slightly sacrificing the age of data we are able to provide in favour of performance and cost.
+ - We have an EC2 which stores every message posted on BlueSky and dumps it into an S3 bucket.
+ - This S3 bucket provides the cheap, unstructured data storage we were looking for to store our unclean message data.
+ - Every ten minutes, we run a Lambda function which transforms the previous ten minutes' messages (around 45,000) into data for the RDS ready to be visualized.
+ #### Notification Service
+ - Using the user data in the RDS, every ten minutes, we use a step function containing our lambda function and an SNS service to notify users on activity spikes relevant to topics to which they are subscribed. 
+ #### Displaying the Data and User Interface
+ - For the user facing aspect of this product, we are using a streamlit dashboard.
+ - This dashboard contains visualizations of both Google search data and BlueSky mentions.
+ - It also allows users to control their accounts, subscribe and unsubscribe from notifications for different topics, and request new topics to be tracked.
+ - We chose Streamlit due to the visually accessible user interfaces we can create through it, as well as its integration with python code which allowed us to easily interact with the rest of our architecture when required by a user action.
+ ## Entity Relationship Diagram
+![alt text for screen readers](./tg_erd.png "Architecture Diagram")
+- This is the ERD which represents the setup of the user/mention data in the Postgres RDS.
+- We have set the database up in 3NF to avoid the replication of the data.
 ## Set-up
 - You must have the following repository secrets on GitHub:
     - AWS_ACCESS_KEY_ID
