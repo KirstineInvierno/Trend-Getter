@@ -1,129 +1,190 @@
+"""Script to connect to AWS S3, extract the latest uploaded JSON file,
+and convert it into a pandas DataFrame for transformation."""
+
 from os import environ
-import datetime
 import boto3
-import json
+import io
+import logging
 from dotenv import load_dotenv
-import time
 import pandas as pd
-from bluesky_etl.transform import Message, MessageTransformer
-from load import DBLoader
+# from bluesky_etl.transform import Message, MessageTransformer
+# from load import DBLoader
 
-load_dotenv()
+logging.basicConfig(
+    format="%(levelname)s | %(asctime)s | %(message)s", level=logging.INFO)
 
+BUCKET = "c18-trend-getter-s3"
 
-def get_s3_connection():
-    s3 = boto3.client('s3',
-                      aws_access_key_id=environ['AWS_ACCESS_KEY_ID'],
-                      aws_secret_access_key=environ['AWS_SECRET_ACCESS_KEY'])
-    return s3
+class S3Connection():
+    """Handles loading environment variables and establishes a connection to the S3 bucket."""
 
+    def __init__(self) -> None:
+        load_dotenv()
+        self.s3 = boto3.client(
+            's3',
+            aws_access_key_id=environ['AWS_ACCESS_KEY_ID'],
+            aws_secret_access_key=environ['AWS_SECRET_ACCESS_KEY']
+        )
+        logging.info("Successfully connected to AWS S3.")
 
-def get_5_minutes_ago_seconds():
-    '''
-    Gets time in seconds 5 minutes ago
-    '''
-    now = int(datetime.datetime.now().strftime('%s'))
-    five_ago = now - 300
-    return five_ago
+    def get_s3_connection(self) -> boto3.client:
+        """Returns the boto3 S3 client."""
+        return self.s3
 
+class MetadataExtractor():
+    """Extracts metadata and file content from an S3 bucket."""
 
-def get_last_modified(obj):
-    '''
-    Gets second of last modified (which will be upload)
-    '''
-    return int(obj['LastModified'].strftime('%s'))
+    def __init__(self) -> None:
+        self.s3 = S3Connection().get_s3_connection()
 
+    def get_latest_file_key(self, bucket: str) -> str:
+        """Returns the key of the most recently uploaded file in the bucket."""
+        response = self.s3.list_objects_v2(Bucket=bucket)
+        objects = response.get("Contents", [])
 
-def get_recent_file_names(s3_connection, bucket: str):
-    '''
-    Returns files sorted by creation time
-    '''
-    s3_connection = boto3.client('s3')
-    objs = s3_connection.list_objects_v2(Bucket=bucket)['Contents']
-    sorted_objs = [{'key': obj['Key'], 'last_mod': get_last_modified(
-        obj)} for obj in sorted(objs, key=get_last_modified)]
-    return sorted_objs
+        if not objects:
+            raise ValueError("No files found in S3 bucket.")
 
+        # Sort objects by LastModified descending
+        latest_object = max(objects, key=lambda x: x["LastModified"])
+        return latest_object["Key"]
 
-def get_files_from_last_five_mins(sorted_list: list[dict], five_mins_ago: int) -> list[dict]:
-    '''
-    Returns list of file keys from last 5 mins, loops through list of s3 objects ordered 
-    by recent first and ends loop when it finds one over 5 mins old 
-    '''
-    keys_list = []
-    for obj in sorted_list:
-        if obj['last_mod'] < five_mins_ago:
-            break
-        keys_list.append(obj['key'])
-    return keys_list
+    def get_latest_file_content(self, bucket: str) -> bytes:
+        """Downloads the latest file content from the S3 bucket."""
+        key = self.get_latest_file_key(bucket)
+        logging.info(f"Downloading file: {key}")
+        response = self.s3.get_object(Bucket=bucket, Key=key)
+        return response["Body"].read()
 
+class Converter():
+    """ Class to converts the JSON files into pandas DataFrames."""
 
-def get_json_list(recent_file_keys: list[str], s3_connection, bucket: str) -> list[dict]:
-    '''
-    Returns a list of dictionaries of the json data from last 5 mins
-    '''
-    json_list = []
-    for key in recent_file_keys:
-        obj = s3_connection.get_object(Bucket=bucket, Key=key)
-        msg_dict = json.loads(obj['Body'].read().decode())
-        json_list.append(msg_dict)
-    return json_list
+    def __init__(self):
+        self.extractor = MetadataExtractor()
 
-
-def get_topics_dict_from_rds(loader: DBLoader):
-    '''
-    Obtains a dictionary of current topics from the RDS
-    '''
-    conn = loader.get_sql_conn()
-    topics_df = pd.read_sql('''SELECT topic_name, topic_id FROM bluesky.topic''',
-                            con=conn)
-    topics_dict = dict(topics_df.values)
-    return topics_dict
-
-
-def get_file_names_to_be_extracted():
-    file_list = get_recent_file_names(s3, 'c18-trend-getter-s3')
-
-    recent_files = get_files_from_last_five_mins(
-        file_list, get_5_minutes_ago_seconds())
-    return recent_files
-
-
-def transform_messages_into_dataframe(list_of_jsons: list[dict], transformer: MessageTransformer):
-    '''
-    Uses transform script on every json dictionary and puts it into a dataframe ready to be loaded to the RDS
-    '''
-    transformed_list = []
-    for item in list_of_jsons:
-        message = Message(item)
-        transformed = transformer.transform(message)
-        if transformed is not None:
-            transformed_list.append(transformed)
-    df = pd.concat(transformed_list)
-    return df
-
+    def json_to_dataframe(self) -> pd.DataFrame:
+        """Downloads the latest JSON file from S3 and converts it to a pandas DataFrame."""
+        raw_json = self.extractor.get_latest_file_content(BUCKET)
+        df = pd.read_json(io.BytesIO(raw_json))
+        logging.info("JSON converted to pandas DataFrame.")
+        return(df)
 
 if __name__ == "__main__":
-    loader = DBLoader()
+    converter = Converter()
+    df = converter.json_to_dataframe()
 
-    topics_dict = get_topics_dict_from_rds(loader)
 
-    s3 = get_s3_connection()
-    file_list = get_recent_file_names(s3, 'c18-trend-getter-s3')
 
-    recent_files = get_files_from_last_five_mins(
-        file_list, get_5_minutes_ago_seconds())
+    # def get_5_minutes_ago_seconds(self):
+    #     '''
+    #     Gets time in seconds 5 minutes ago
+    #     '''
+    #     now = int(datetime.datetime.now().strftime('%s'))
+    #     five_ago = now - 300
+    #     return five_ago
 
-    t1 = time.time()
-    list_of_jsons = get_json_list(recent_files, s3, 'c18-trend-getter-s3')
-    transformer = MessageTransformer(topics_dict)
 
-    t2 = time.time()
+    # def get_last_modified(obj):
+    #     '''
+    #     Gets second of last modified (which will be upload)
+    #     '''
+    #     return int(obj['LastModified'].strftime('%s'))
 
-    df_for_load = transform_messages_into_dataframe(
-        list_of_jsons=list_of_jsons, transformer=transformer)
 
-    t3 = time.time()
-    print(
-        f'Files imported: {len(file_list)}, {t2-t1} seconds, messages transformed: {len(df_for_load)}, {t3-t2} seconds, total: {t3-t1} seconds')
-    print(df_for_load)
+    # def get_recent_file_names(s3_connection, bucket: str):
+    #     '''
+    #     Returns files sorted by creation time
+    #     '''
+    #     s3_connection = boto3.client('s3')
+    #     objs = s3_connection.list_objects_v2(Bucket=bucket)['Contents']
+    #     sorted_objs = [{'key': obj['Key'], 'last_mod': get_last_modified(
+    #         obj)} for obj in sorted(objs, key=get_last_modified)]
+    #     return sorted_objs
+
+
+# def get_files_from_last_five_mins(sorted_list: list[dict], five_mins_ago: int) -> list[dict]:
+#     '''
+#     Returns list of file keys from last 5 mins, loops through list of s3 objects ordered 
+#     by recent first and ends loop when it finds one over 5 mins old 
+#     '''
+#     keys_list = []
+#     for obj in sorted_list:
+#         if obj['last_mod'] < five_mins_ago:
+#             break
+#         keys_list.append(obj['key'])
+#     return keys_list
+
+
+# def get_json_list(recent_file_keys: list[str], s3_connection, bucket: str) -> list[dict]:
+#     '''
+#     Returns a list of dictionaries of the json data from last 5 mins
+#     '''
+#     json_list = []
+#     for key in recent_file_keys:
+#         obj = s3_connection.get_object(Bucket=bucket, Key=key)
+#         msg_dict = json.loads(obj['Body'].read().decode())
+#         json_list.append(msg_dict)
+#     return json_list
+
+
+# def get_topics_dict_from_rds(loader: DBLoader):
+#     '''
+#     Obtains a dictionary of current topics from the RDS
+#     '''
+#     conn = loader.get_sql_conn()
+#     topics_df = pd.read_sql('''SELECT topic_name, topic_id FROM bluesky.topic''',
+#                             con=conn)
+#     topics_dict = dict(topics_df.values)
+#     return topics_dict
+
+
+# def get_file_names_to_be_extracted():
+#     file_list = get_recent_file_names(s3, 'c18-trend-getter-s3')
+
+#     recent_files = get_files_from_last_five_mins(
+#         file_list, get_5_minutes_ago_seconds())
+#     return recent_files
+
+
+# def transform_messages_into_dataframe(list_of_jsons: list[dict], transformer: MessageTransformer):
+#     '''
+#     Uses transform script on every json dictionary and puts it into a dataframe ready to be loaded to the RDS
+#     '''
+#     transformed_list = []
+#     for item in list_of_jsons:
+#         message = Message(item)
+#         transformed = transformer.transform(message)
+#         if transformed is not None:
+#             transformed_list.append(transformed)
+#     df = pd.concat(transformed_list)
+#     return df
+
+
+# if __name__ == "__main__":
+#     loader = DBLoader()
+
+#     topics_dict = get_topics_dict_from_rds(loader)
+
+#     s3 = get_s3_connection()
+#     file_list = get_recent_file_names(s3, 'c18-trend-getter-s3')
+
+#     recent_files = get_files_from_last_five_mins(
+#         file_list, get_5_minutes_ago_seconds())
+
+#     t1 = time.time()
+#     list_of_jsons = get_json_list(recent_files, s3, 'c18-trend-getter-s3')
+#     transformer = MessageTransformer(topics_dict)
+
+#     t2 = time.time()
+
+#     df_for_load = transform_messages_into_dataframe(
+#         list_of_jsons=list_of_jsons, transformer=transformer)
+
+#     t3 = time.time()
+#     print(
+#         f'Files imported: {len(file_list)}, {t2-t1} seconds, messages transformed: {len(df_for_load)}, {t3-t2} seconds, total: {t3-t1} seconds')
+#     print(df_for_load)
+
+
+# latest_key = get_latest_file_key(s3, "your-bucket-name")
+# df = get_json_list(s3, "your-bucket-name", [latest_key])
