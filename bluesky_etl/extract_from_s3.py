@@ -5,7 +5,7 @@ import json
 from dotenv import load_dotenv
 import time
 import pandas as pd
-from bluesky_etl.transform_copy import Message, MessageTransformer
+from bluesky_etl.transform import Message, MessageTransformer
 from load import DBLoader
 
 load_dotenv()
@@ -20,7 +20,7 @@ def get_s3_connection():
 
 def get_5_minutes_ago_seconds():
     '''
-    Gets time 5 minutes ago
+    Gets time in seconds 5 minutes ago
     '''
     now = int(datetime.datetime.now().strftime('%s'))
     five_ago = now - 300
@@ -47,11 +47,12 @@ def get_recent_file_names(s3_connection, bucket: str):
 
 def get_files_from_last_five_mins(sorted_list: list[dict], five_mins_ago: int) -> list[dict]:
     '''
-    Returns list of file keys from last 5 mins
+    Returns list of file keys from last 5 mins, loops through list of s3 objects ordered 
+    by recent first and ends loop when it finds one over 5 mins old 
     '''
     keys_list = []
     for obj in sorted_list:
-        if obj['last_mod'] < 1:
+        if obj['last_mod'] < five_mins_ago:
             break
         keys_list.append(obj['key'])
     return keys_list
@@ -98,6 +99,8 @@ def transform_messages_into_dataframe(list_of_jsons: list[dict], transformer: Me
         transformed = transformer.transform(message)
         if transformed is not None:
             transformed_list.append(transformed)
+    df = pd.concat(transformed_list)
+    return df
 
 
 if __name__ == "__main__":
@@ -114,16 +117,13 @@ if __name__ == "__main__":
     t1 = time.time()
     list_of_jsons = get_json_list(recent_files, s3, 'c18-trend-getter-s3')
     transformer = MessageTransformer(topics_dict)
-    transformed_list = []
+
     t2 = time.time()
-    for item in list_of_jsons:
-        message = Message(item)
-        transformed = transformer.transform(message)
-        if transformed is not None:
-            transformed_list.append(transformed)
-    df = pd.concat(transformed_list)
+
+    df_for_load = transform_messages_into_dataframe(
+        list_of_jsons=list_of_jsons, transformer=transformer)
 
     t3 = time.time()
     print(
-        f'Files imported: {len(file_list)}, {t2-t1} seconds, messages transformed: {len(transformed_list)}, {t3-t2} seconds, total: {t3-t1} seconds')
+        f'Files imported: {len(file_list)}, {t2-t1} seconds, messages transformed: {len(df_for_load)}, {t3-t2} seconds, total: {t3-t1} seconds')
     print(df)
