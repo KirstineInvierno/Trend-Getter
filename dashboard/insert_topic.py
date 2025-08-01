@@ -59,14 +59,14 @@ class TopicInserter():
                     cur.execute(("""SELECT topic_id from bluesky.topic
                                 WHERE topic_name = %s;"""), (topic_name,))
                     topic_id = cur.fetchone()
-                    if topic_id:
-                        return topic_id[0]
-                    cur.execute(("""INSERT INTO bluesky.topic (topic_name)
-                                VALUES (%s)
-                                RETURNING topic_id;"""), (topic_name,))
-                    topic_id = cur.fetchone()
-                    return topic_id[0]
 
+                    if not topic_id:
+                        cur.execute("""INSERT INTO bluesky.topic (topic_name)
+                                    VALUES (%s) RETURNING topic_id;""", (topic_name,))
+                        topic_id = cur.fetchone()
+                    if not topic_id:
+                        raise RuntimeError(f"Failed to insert or retrieve topic: {topic_name}")
+                return topic_id[0]
         except Exception as e:
             logging.error("Insert failed: %s", e)
             raise
