@@ -1,5 +1,6 @@
 # TrendGetter Project
 
+ ![alt text for screen readers](./TGlogo.png "Architecture Diagram")
 ## Summary
 In a world driven by reputation and real-time information, individuals and brands need timely insights into how topics and trends are evolving across the web. While platforms like Google Trends and Bluesky hold valuable data about public interest and sentiment, accessing and interpreting this data requires technical expertise. As a result, most people are left relying on outdated, second-hand insights. There is a clear need for an accessible tool that empowers anyone to track, compare, and stay informed about the topics they care about — in real time.
 
@@ -39,7 +40,7 @@ Create a tool that allows users to select topics/tags on key sites (Google Trend
  ## Entity Relationship Diagram
 ![alt text for screen readers](./tg_erd.png "Architecture Diagram")
 - This is the ERD which represents the setup of the user/mention data in the Postgres RDS.
-- We have set the database up in 3NF to avoid the replication of the data.
+- We have set the database up in 3NF to avoid the keeping of redundant data.
 ## Set-up
 - You must have the following repository secrets on GitHub:
     - AWS_ACCESS_KEY_ID
@@ -56,7 +57,7 @@ Create a tool that allows users to select topics/tags on key sites (Google Trend
 
 ## Technology
 - Python - pandas, psycopg2, pylint, pytest
-- AWS - RDS
+- AWS - RDS, EC2, S3, Step Functions, Lambda
 - Docker
 - Terraform
 - PostgreSQL
