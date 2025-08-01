@@ -49,7 +49,7 @@ class TopicInserter():
 
     def insert_topic(self, topic_name: str) -> int:
         """Inserts a formatted topic into the database and returns the topic id.
-        If the topic already exists, the topic id of the existing topic will be returned"""
+          If the topic already exists, the topic id of the existing topic will be returned"""
         topic_name = self.format_topic(topic_name)
 
         conn = self.db.get_connection()
@@ -59,15 +59,17 @@ class TopicInserter():
                     cur.execute(("""SELECT topic_id from bluesky.topic
                                 WHERE topic_name = %s;"""), (topic_name,))
                     topic_id = cur.fetchone()
-                    if topic_id:
-                        return topic_id[0]
-                    cur.execute(("""INSERT INTO bluesky.topic (topic_name)
-                                VALUES (%s)
-                                RETURNING topic_id;"""), (topic_name,))
-                    topic_id = cur.fetchone()
-                    if topic_id:
-                        return topic_id[0]
 
+                    if not topic_id:
+                        cur.execute("""
+                            INSERT INTO bluesky.topic (topic_name)
+                            VALUES (%s)
+                            RETURNING topic_id;
+                        """, (topic_name,))
+                        topic_id = cur.fetchone()
+                    if not topic_id:
+                        raise RuntimeError(f"Failed to insert or retrieve topic: {topic_name}")
+                return topic_id[0]
         except Exception as e:
             logging.error("Insert failed: %s", e)
             raise
