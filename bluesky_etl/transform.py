@@ -1,5 +1,5 @@
 """
-Transform script (OOP version):
+Transform script:
 Takes a message extracted from the API and transforms it to a 
 DataFrame ready to load into the database
 """

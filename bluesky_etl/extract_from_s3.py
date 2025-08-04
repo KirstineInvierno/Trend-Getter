@@ -3,10 +3,12 @@ and convert it into a pandas DataFrame for transformation."""
 
 from os import environ
 import boto3
+import json
 import io
 import logging
 from dotenv import load_dotenv
 import pandas as pd
+from transform import Message, MessageTransformer
 # from bluesky_etl.transform import Message, MessageTransformer
 # from load import DBLoader
 
@@ -14,65 +16,79 @@ logging.basicConfig(
     format="%(levelname)s | %(asctime)s | %(message)s", level=logging.INFO)
 
 BUCKET = "c18-trend-getter-s3"
+PREFIX = "bluesky/raw_posts/"
 
 class S3Connection():
     """Handles loading environment variables and establishes a connection to the S3 bucket."""
 
     def __init__(self) -> None:
         load_dotenv()
-        self.s3 = boto3.client(
+        try:
+            self.s3 = boto3.client(
             's3',
             aws_access_key_id=environ['AWS_ACCESS_KEY_ID'],
             aws_secret_access_key=environ['AWS_SECRET_ACCESS_KEY']
         )
-        logging.info("Successfully connected to AWS S3.")
+            logging.info("Successfully connected to AWS S3.")
+        except Exception as e:
+            logging.error(f"Unable to connect to AWS S3. Error: {e}")
 
     def get_s3_connection(self) -> boto3.client:
         """Returns the boto3 S3 client."""
         return self.s3
 
-class MetadataExtractor():
+class Extractor():
     """Extracts metadata and file content from an S3 bucket."""
 
-    def __init__(self) -> None:
-        self.s3 = S3Connection().get_s3_connection()
+    def __init__(self, connection) -> None:
+        self.s3 = connection
 
     def get_latest_file_key(self, bucket: str) -> str:
         """Returns the key of the most recently uploaded file in the bucket."""
-        response = self.s3.list_objects_v2(Bucket=bucket)
-        objects = response.get("Contents", [])
+        logging.info("Fetching latest key")
+        response = self.s3.list_objects_v2(Bucket=bucket, Prefix=PREFIX)
+        objects = response.get("Contents")
 
         if not objects:
-            raise ValueError("No files found in S3 bucket.")
+            logging.error("No files found in S3 bucket.")
 
         # Sort objects by LastModified descending
         latest_object = max(objects, key=lambda x: x["LastModified"])
         return latest_object["Key"]
 
-    def get_latest_file_content(self, bucket: str) -> bytes:
-        """Downloads the latest file content from the S3 bucket."""
+    def get_latest_file_as_dicts(self, bucket: str) -> list[dict]:
+        """Downloads the latest file from the S3 bucket and returns a list of python dicts."""
         key = self.get_latest_file_key(bucket)
         logging.info(f"Downloading file: {key}")
         response = self.s3.get_object(Bucket=bucket, Key=key)
-        return response["Body"].read()
+        content = response["Body"].read().decode("utf-8")
+        logging.info("JSON file successfully converted.")
 
-class Converter():
-    """ Class to converts the JSON files into pandas DataFrames."""
+        return json.loads(content)
+    
+    def return_single_message_as_dict(self, bucket: str):
+        """Generator that yields one dict (message) at a time from the latest S3 JSON file."""
+        messages = self.get_latest_file_as_dicts(bucket)
+        for message_dict in messages:
+            yield message_dict
 
-    def __init__(self):
-        self.extractor = MetadataExtractor()
-
-    def json_to_dataframe(self) -> pd.DataFrame:
-        """Downloads the latest JSON file from S3 and converts it to a pandas DataFrame."""
-        raw_json = self.extractor.get_latest_file_content(BUCKET)
-        df = pd.read_json(io.BytesIO(raw_json))
-        logging.info("JSON converted to pandas DataFrame.")
-        return(df)
 
 if __name__ == "__main__":
-    converter = Converter()
-    df = converter.json_to_dataframe()
+    connection = S3Connection()
+    conn = connection.get_s3_connection()
+    extractor = Extractor(conn)
+    transformer = MessageTransformer
 
+    for message_dict in extractor.return_single_message_as_dict(BUCKET):
+        try:
+            message = Message(message_dict)
+            df = transformer.transform(message)
+            if df is not None:
+                print(df)
+        except ValueError as e:
+            logging.warning(f"Skipping invalid message: {e}")
+
+    print("finished")
 
 
     # def get_5_minutes_ago_seconds(self):
