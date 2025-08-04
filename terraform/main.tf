@@ -87,3 +87,4 @@ resource "aws_s3_bucket" "trendy-s3" {
   bucket = "c18-trendy-s3"
 
 }
+
