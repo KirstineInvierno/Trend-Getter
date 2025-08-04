@@ -55,6 +55,10 @@ Create a tool that allows users to select topics/tags on key sites (Google Trend
 
 ## Files explained
 
+## CI/CD
+- In order to smoothly develop and integrate changes to our service, we made use of github actions.
+- Firstly, we used a workflow which automatically ran test files and pylint before any merge to the main branch, only allowing the merge to go ahead if the checks passed satisfactorily. This prevented 
+
 ## Technology
 - Python - pandas, psycopg2, pylint, pytest
 - AWS - RDS, EC2, S3, Step Functions, Lambda
