@@ -1,6 +1,5 @@
 """Extract script to read live data from the Bluesky firehose API"""
 import time
-import datetime
 import logging
 from atproto import FirehoseSubscribeReposClient, parse_subscribe_repos_message, CAR, models
 from utilities import Message
@@ -18,11 +17,18 @@ class BlueSkyFirehose:
     """Tracks all Bluesky messages"""
 
     def __init__(self) -> None:
+        """its tuesday innit"""
         self.client = FirehoseSubscribeReposClient()
         self.time_period_start = time.time()
         self.json_list = []
 
-    def message_handling(self, message: Message):
+    def message_handling(self, message: Message) -> bool:
+        """
+        manages the messages, if it's been 10 minutes since last 
+        upload (time_period_start) then upload current batch of 
+        jsons and reset json_list if not then just add the new message 
+        json to the list
+        """
         self.json_list.append(message.json)
         current_time = time.time()
         if current_time-self.time_period_start < TIME_PERIOD_LENGTH:
