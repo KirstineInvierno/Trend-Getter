@@ -1,4 +1,4 @@
-"""script to upload Message objects to the s3 bucket"""
+"""Script to upload Message objects to the s3 bucket"""
 import os
 import json
 from datetime import datetime

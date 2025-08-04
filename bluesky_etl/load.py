@@ -1,40 +1,46 @@
-"""Script to load a prepared message dataframe into the RDS database."""
+'''
+This script loads a prepared message dataframe into the RDS database 
+'''
 
 from os import environ
+import time
 import pandas as pd
 import sqlalchemy
 import psycopg2
-import logging
 from dotenv import load_dotenv
-from sqlalchemy.engine import Engine
-from sqlalchemy.exc import SQLAlchemyError
+import logging
+
 
 load_dotenv()
 
 logging.basicConfig(
-    format="%(levelname)s | %(asctime)s | %(message)s", level=logging.INFO)
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
 
 class DBLoader():
-    """Handles upload of data to RDS."""
+    '''
+    Class which deals with the upload of the data
+    '''
 
     def get_sql_conn(self):
-        """Returns connection to RDS."""
-        try:
-            host = environ["DB_HOST"]
-            user = environ["DB_USER"]
-            password = environ["DB_PASSWORD"]
-            database = environ["DB_NAME"]
-            engine = sqlalchemy.create_engine(
-                f"postgresql+psycopg2://{user}:{password}@{host}/{database}")
-            logging.info("Successfully connected to the RDS.")
-            return engine
-        except SQLAlchemyError as e:
-            logging.error("Failed to connect to RDS. Error: %s", e)
-            raise
+        '''
+        Returns connection to RDS
+        '''
+        host = environ["DB_HOST"]
+        user = environ["DB_USER"]
+        password = environ["DB_PASSWORD"]
+        database = environ["DB_NAME"]
+        engine = sqlalchemy.create_engine(
+            f"postgresql+psycopg2://{user}:{password}@{host}/{database}")
+        return engine
 
     def upload_df_to_mention(self, df: pd.DataFrame,
-                             engine: Engine, schema: str) -> None:
-        """Uploads data to the RDS."""
+                             engine: sqlalchemy.engine, schema: str) -> None:
+        '''
+        Performs the upload to the RDS
+        '''
         with engine.begin() as conn:
             df.to_sql(
                 'mention',
@@ -43,11 +49,20 @@ class DBLoader():
                 index=False,
                 schema=schema
             )
-            logging.info("Uploaded %s rows to the RDS.", len(df))
+            conn.commit()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     loader = DBLoader()
     df = pd.DataFrame()
+    time1 = time.time()
+    logging.info('Connecting...')
     con = loader.get_sql_conn()
-    loader.upload_df_to_mention(engine=con, df=df, schema="bluesky")
+    time2 = time.time()
+    logging.info(f'Connected in {round(time2-time1, 2)} seconds')
+    logging.info('Uploading...')
+    loader.upload_df_to_mention(engine=con, df=df, schema='bluesky')
+    time3 = time.time()
+    logging.info(f'Uploaded in {round(time3-time2, 2)} seconds')
+    logging.info(
+        f'Load completed in a total of {round(time3-time1, 2)} seconds')
