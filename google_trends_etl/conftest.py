@@ -1,4 +1,4 @@
-# conftest.py
+# pylint: skip-file
 import pytest
 import pandas as pd
 from gt_dash import DataManipulator
