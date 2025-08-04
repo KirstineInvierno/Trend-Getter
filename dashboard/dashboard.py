@@ -2,7 +2,7 @@
 import streamlit as st
 import re
 import logging
-from insert_phone_number import PhoneNumberInserter
+from insert_email import EmailInserter
 from insert_topic import TopicInserter
 from insert_subscription import SubscriptionInserter
 import gt_dash
@@ -20,19 +20,28 @@ def validate_phone_number(phone_number: str) -> bool:
         return False
 
 
+def validate_email(email: str) -> bool:
+    """Checks if email is a valid input"""
+    email_regex = re.compile(r"^[\w\.-]+@[\w\.-]+\.\w+$")
+    if email_regex.match(email):
+        return True
+    else:
+        return False
+
+
 def unsubscribe() -> None:
-    """Allows a user to enter their phone number and unsubscribe to a topic"""
-    phone_input = st.text_input("Enter phone number to manage subscriptions:")
-    if phone_input:
-        if validate_phone_number(phone_input):
+    """Allows a user to enter their email and unsubscribe to a topic"""
+    email_input = st.text_input("Enter your email to manage subscriptions:")
+    if email_input:
+        if validate_email(email_input):
 
             try:
-                phone_number_inserter = PhoneNumberInserter()
-                user_id = phone_number_inserter.get_user_id(phone_input)
+                email_inserter = EmailInserter()
+                user_id = email_inserter.get_user_id(email_input)
                 if user_id == -1:
-                    st.error("Phone number not found")
+                    st.error("Email not found")
                     logging.error(
-                        f"User tried to unsubscribe with unknown phone number")
+                        f"User tried to unsubscribe with unknown email")
                     return
                 subscription_inserter = SubscriptionInserter()
                 subscribed_topics = subscription_inserter.get_subscriptions(
@@ -57,30 +66,30 @@ def unsubscribe() -> None:
             logging.error(f"Unexpected error when unsubscribing.")
         else:
             st.error(
-                f"{phone_input} is not a valid UK phone number")
+                f"{email_input} is not a valid email")
 
 
 def subscription() -> None:
-    """Takes a phone number, topic and a threshold, and subscribes the user to the topic if they
+    """Takes an email, topic and a threshold, and subscribes the user to the topic if they
     are not already subscribed. If the user is already subscribed, the threshold is updated."""
     with st.form("Subscribe form"):
-        phone_input = st.text_input("Enter phone number:")
+        email_input = st.text_input("Enter your email:")
         topic_input = st.text_input("Subscribe to a topic:")
         threshold_input = st.text_input(
             "Enter the minimum number of mentions in 10 minutes to trigger a notification:")
         submit = st.form_submit_button("Submit")
         if submit:
-            if not validate_phone_number(phone_input):
+            if not validate_email(email_input):
                 st.error(
-                    f"{phone_input} is not a valid UK phone number")
+                    f"{email_input} is not a valid email")
                 return
             if not threshold_input.isdigit():
                 st.error("Threshold must be a whole number")
                 return
 
             try:
-                phone_number_inserter = PhoneNumberInserter()
-                user_id = phone_number_inserter.insert_number(phone_input)
+                email_inserter = EmailInserter()
+                user_id = email_inserter.insert_email(email_input)
 
                 topic_inserter = TopicInserter()
                 topic_id = topic_inserter.insert_topic(topic_input)
@@ -89,10 +98,10 @@ def subscription() -> None:
                     user_id, topic_id, int(threshold_input))
                 if added:
                     st.success(
-                        f"{phone_input} has subscribed to {topic_input} and will be notified when there are more than {threshold_input} mentions in a 10 minute interval")
+                        f"{email_input} has subscribed to {topic_input} and will be notified when there are more than {threshold_input} mentions in a 10 minute interval")
                 else:
                     st.info(
-                        f"{phone_input} is already subscribed to  {topic_input}. Threshold set to {threshold_input}")
+                        f"{email_input} is already subscribed to  {topic_input}. Threshold set to {threshold_input}")
             except Exception as e:
                 st.error(
                     f"An error occured while subscribing to a topic: {e}")
