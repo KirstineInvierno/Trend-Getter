@@ -2,7 +2,6 @@
 import pytest
 import pandas as pd
 from unittest.mock import MagicMock, patch
-from transform import Message, MessageTransformer, MessageError
 from extract_from_s3 import S3Connection, DatabaseTopicExtractor, S3FileExtractor, Converter
 
 
