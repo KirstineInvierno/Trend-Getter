@@ -1,4 +1,4 @@
-"""Script to upload Message objects to the s3 bucket"""
+"""Script to upload Message objects to the S3 bucket."""
 import os
 import json
 from datetime import datetime
@@ -22,27 +22,25 @@ FILE_PATH = 'bluesky/raw_posts/'
 
 
 class S3Loader:
-    """static methods used to load a Message object to the s3"""
+    """Static methods used to load a Message object to the S3"""
     @staticmethod
     def random_string() -> str:
-        """
-        generates a universally unique identifier (UUID) for use as a unique filename
-        """
+        """Generates a universally unique identifier (UUID) for use as a unique filename."""
         return uuid.uuid4().hex
 
     @staticmethod
     def format_date(date: datetime) -> str:
-        """formats the timestamp in a filename-appropriate way"""
+        """Formats the timestamp in a filename-appropriate way."""
         return date.strftime("%d-%m-%YT%H-%M-%S")
 
     @staticmethod
     def load_to_s3(data: list[dict]):
-        """uploads message object to s3 as a json"""
+        """Uploads message object to the S3 as a JSON."""
         time1 = time.time()
         session = boto3.Session(
-            aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
-            aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
-            region_name=os.getenv('AWS_DEFAULT_REGION', 'eu-west-2')
+            aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+            aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+            region_name=os.getenv("AWS_DEFAULT_REGION", "eu-west-2")
         )
 
         client = session.client("s3")
@@ -58,7 +56,7 @@ class S3Loader:
 
         time2 = time.time()
         logging.info(
-            f"{filename} uploaded to {BUCKET_NAME} in {round(time2-time1, 2)} seconds")
+            "%s uploaded to %s in %s seconds", filename, BUCKET_NAME, round(time2-time1, 2))
 
         return filename
 
@@ -66,13 +64,13 @@ class S3Loader:
     def download_json(data: list[dict]):
         """
         [FOR TESTING PURPOSES]
-        downloads json in the format it would be uploaded to the s3
+        Downloads json in the format it would be uploaded to the S3.
         """
         filename = f"{S3Loader.random_string()}--{S3Loader.format_date(datetime.now())}.json"
         with open(filename, "w", encoding="utf-8") as file:
             json.dump(data, file, indent=2)
 
-        logging.info(f"{filename} saved")
+        logging.info("%s saved", filename)
 
 
 if __name__ == "__main__":
