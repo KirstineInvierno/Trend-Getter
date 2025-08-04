@@ -10,25 +10,23 @@ from pytrends.exceptions import TooManyRequestsError
 class DataManipulator():
 
     @st.cache_data
-    def get_trends_data(_self, topic: str) -> pd.DataFrame:
+    def get_trends_data(_self, topic: str, timeframe: str) -> pd.DataFrame:
         '''
         Obtain dataframes to be cached
         '''
         pytrends = TrendReq(hl='en-US', tz=360)
 
         try:
-            pytrends.build_payload(kw_list=[topic], timeframe='today 12-m')
-            df_weekly = pytrends.interest_over_time()
-            pytrends.build_payload(kw_list=[topic], timeframe='now 7-d')
-            df_daily = pytrends.interest_over_time()
+            pytrends.build_payload(kw_list=[topic], timeframe=timeframe)
+            df = pytrends.interest_over_time()
 
         except TooManyRequestsError:
             st.text('Too many requests. Please try again later.')
             empty_df = pd.DataFrame(
                 data={'date': [], 'topic_name': [], 'hits': []})
-            return empty_df, empty_df
+            return empty_df
 
-        return _self.prepare_df(df_weekly, topic), _self.prepare_df(df_daily, topic)
+        return _self.prepare_df(df, topic)
 
     def prepare_df(self, df: pd.DataFrame, topic: str) -> pd.DataFrame:
         '''
@@ -44,23 +42,18 @@ class DataManipulator():
         '''
         Sets up the dataframes to be added to when the session begins
         '''
-        if 'weekly_df' not in st.session_state:
-            st.session_state.weekly_df = pd.DataFrame(
-                data={'date': [], 'topic_name': [], 'hits': []})
-        if 'daily_df' not in st.session_state:
-            st.session_state.daily_df = pd.DataFrame(
+        if 'trend_df' not in st.session_state:
+            st.session_state.trend_df = pd.DataFrame(
                 data={'date': [], 'topic_name': [], 'hits': []})
 
-    def update_dataframes(self, topic: str) -> None:
+    def update_dataframes(self, topic: str, timeframe: str) -> None:
         '''
         Updates dataframes with new topic data
         '''
-        new_dfs = self.get_trends_data(topic)
+        new_df = self.get_trends_data(topic, timeframe)
 
-        st.session_state.weekly_df = pd.concat([
-            st.session_state.weekly_df, new_dfs[0]])
-        st.session_state.daily_df = pd.concat([
-            st.session_state.daily_df, new_dfs[1]])
+        st.session_state.trend_df = pd.concat([
+            st.session_state.trend_df, new_df])
 
 
 class STDisplayer():
@@ -79,24 +72,14 @@ class STDisplayer():
         data = df[df["topic_name"].isin(options)]
         return data
 
-    def weekly_line_chart(self, df: pd.DataFrame) -> None:
+    def trend_line_chart(self, df: pd.DataFrame) -> None:
         '''
-        Creates a line chart which shows hourly sales for each truck
-        '''
-
-        data = self.filter_trend_options(df, unique_key='unique1')
-
-        st.line_chart(data, x='date', x_label='Week Start Date',  y='hits',
-                      y_label='Hit Rate', color='topic_name')
-
-    def daily_line_chart(self, df: pd.DataFrame) -> None:
-        '''
-        Creates a line chart which shows hourly sales for each topic
+        Creates a line chart which shows the popularity of a topic over a certain timeframe
         '''
 
-        data = self.filter_trend_options(df, unique_key='unique2')
+        data = self.filter_trend_options(df, unique_key='trend_chart')
 
-        st.line_chart(data, x='date', x_label='Hour Start Date',  y='hits',
+        st.line_chart(data, x='date', x_label='date',  y='hits',
                       y_label='Hit Rate', color='topic_name')
 
     def topic_input(self) -> str:
@@ -109,6 +92,13 @@ class STDisplayer():
 
 if __name__ == '__main__':
     st.title('Google Search Trends')
+    st.markdown("""
+        **What does 'Hit rate' mean?**  
+        This is a relative score provided by Google Trends.  
+        - 100 = peak popularity  
+        - 50 = moderate interest  
+        - 0 = No interest 
+        """)
 
     display = STDisplayer()
     manipulator = DataManipulator()
@@ -116,11 +106,24 @@ if __name__ == '__main__':
     manipulator.initialise_session_state_dataframes()
     st.text('Please Input a topic to see the relevant search '
             'trends over the last year and the last week.')
-    input_topic = display.topic_input()
+    timeframe_options = {
+        'Last 7 days': 'now 7-d',
+        'Last 1 month': 'today 1-m',
+        'Last 12 months': 'today 12-m',
+    }
 
-    if input_topic:
+    timeframe_label = st.selectbox(
+        'Select a timeframe to view topic popularity',
+        list(timeframe_options.keys())
+    )
+    timeframe = timeframe_options[timeframe_label]
 
-        manipulator.update_dataframes(input_topic)
+    with st.form("trend_form"):
+        input_topic = display.topic_input()
+        submitted = st.form_submit_button("Submit")
 
-        display.weekly_line_chart(st.session_state.weekly_df)
-        display.daily_line_chart(st.session_state.daily_df)
+    if input_topic and submitted:
+
+        manipulator.update_dataframes(input_topic, timeframe)
+
+        display.trend_line_chart(st.session_state.trend_df)
