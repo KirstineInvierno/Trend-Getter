@@ -100,9 +100,6 @@ def subscription() -> None:
                     f"An error occured while subscribing to a topic: {e}.")
 
 
-# 010500
-# D9F5D5
-# C8F7F6
 if __name__ == "__main__":
     st.markdown(
         """
@@ -134,12 +131,5 @@ if __name__ == "__main__":
         with unsub_tab:
             unsubscribe()
 
-            # col1, col2 = st.columns(2)
-            # with col1:
-            #     st.header("Subscribe")
-            #     subscription()
-            # with col2:
-            #     st.header("Unsubscribe")
-            #     unsubscribe()
     with tab2:
         gt_dash.gt_dashboard()
