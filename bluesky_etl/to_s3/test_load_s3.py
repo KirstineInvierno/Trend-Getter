@@ -32,3 +32,4 @@ def test_random_string_is_uuid():
 def test_format_date_format(dt, expected):
     result = S3Loader.format_date(dt)
     assert result == expected
+
