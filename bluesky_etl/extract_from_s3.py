@@ -123,3 +123,11 @@ if __name__ == "__main__":
     messages_dict_list = converter.get_latest_file_as_dicts(BUCKET)
 
     df = converter.transform_messages_into_dataframe(messages_dict_list, transformer)
+
+    if df is not None and not df.empty:
+        engine = loader.get_sql_conn()
+        logging.info("Uploading DataFrame to database...")
+        loader.upload_df_to_mention(df=df, engine=engine, schema="bluesky")
+        logging.info("Upload complete.")
+    else:
+        logging.warning("No data to upload.")
