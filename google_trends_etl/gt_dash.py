@@ -1,6 +1,4 @@
-'''
-This is the tab for visualisations of the google trends data
-'''
+"""This is the tab for visualisations of the google trends data"""
 import streamlit as st
 import pandas as pd
 from pytrends.request import TrendReq
@@ -11,10 +9,8 @@ class DataManipulator():
 
     @st.cache_data
     def get_trends_data(_self, topic: str, timeframe: str) -> pd.DataFrame:
-        '''
-        Obtain dataframes to be cached
-        '''
-        pytrends = TrendReq(hl='en-US', tz=360)
+        """Obtain dataframes to be cached"""
+        pytrends = TrendReq(hl='en-GB', tz=60)
 
         try:
             pytrends.build_payload(kw_list=[topic], timeframe=timeframe)
@@ -29,9 +25,7 @@ class DataManipulator():
         return _self.prepare_df(df, topic)
 
     def prepare_df(self, df: pd.DataFrame, topic: str) -> pd.DataFrame:
-        '''
-        Prepares the dataframes to be used in the visualisations
-        '''
+        """Prepares the dataframes to be used in the visualisations"""
         df['topic_name'] = topic
         df['date'] = df.index
         df.rename(columns={topic: 'hits'}, inplace=True)
@@ -39,17 +33,13 @@ class DataManipulator():
         return df
 
     def initialise_session_state_dataframes(self) -> None:
-        '''
-        Sets up the dataframes to be added to when the session begins
-        '''
+        """Sets up the dataframes to be added to when the session begins"""
         if 'trend_df' not in st.session_state:
             st.session_state.trend_df = pd.DataFrame(
                 data={'date': [], 'topic_name': [], 'hits': []})
 
     def update_dataframes(self, topic: str, timeframe: str) -> None:
-        '''
-        Updates dataframes with new topic data
-        '''
+        """Updates dataframes with new topic data"""
         new_df = self.get_trends_data(topic, timeframe)
 
         st.session_state.trend_df = pd.concat([
@@ -59,9 +49,7 @@ class DataManipulator():
 class STDisplayer():
 
     def filter_trend_options(self, df: pd.DataFrame, unique_key: str) -> pd.DataFrame:
-        '''
-        Filters data frame based on dashboard user's input
-        '''
+        """Filters data frame based on dashboard user's input"""
         options = st.multiselect(
             'Which Trends?',
             df['topic_name'].unique(),
@@ -73,9 +61,7 @@ class STDisplayer():
         return data
 
     def trend_line_chart(self, df: pd.DataFrame) -> None:
-        '''
-        Creates a line chart which shows the popularity of a topic over a certain timeframe
-        '''
+        """Creates a line chart which shows the popularity of a topic over a certain timeframe"""
 
         data = self.filter_trend_options(df, unique_key='trend_chart')
 
@@ -83,9 +69,7 @@ class STDisplayer():
                       y_label='Hit Rate', color='topic_name')
 
     def topic_input(self) -> str:
-        '''
-        Takes input as topic
-        '''
+        """Takes input as topic"""
         topic = st.text_input('Input a Topic to View.')
         return topic
 
