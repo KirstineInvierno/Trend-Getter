@@ -165,18 +165,6 @@ class TestMessageTransformer:
         assert pipeline_result2 == mock_pipeline_instance
         assert pipeline_result is pipeline_result2
 
-    # def test_topics_lazy_loading(self, transformer, topics_df):
-    #     """Test that topics DataFrame is lazily loaded"""
-    #     # create the DataFrame
-
-    #     assert isinstance(topics_df, pd.DataFrame)
-    #     assert 'topic_id' in topics_df.columns
-    #     assert 'topic_name' in topics_df.columns
-
-    #     # return cached DataFrame
-    #     topics_df2 = transformer.topics
-    #     assert topics_df is topics_df2
-
     @patch('transform.pipeline')
     def test_get_sentiment(self, mock_pipeline, transformer):
         """Test sentiment analysis method"""
