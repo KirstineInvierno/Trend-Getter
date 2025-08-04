@@ -285,7 +285,6 @@ class TestMessageTransformer:
         result = transformer.transform(message)
 
         assert isinstance(result, pd.DataFrame)
-        # should have football, cricket, england
         assert len(result) == 2
 
         topics_in_result = result['topic_id'].tolist()
