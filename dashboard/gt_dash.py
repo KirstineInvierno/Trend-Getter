@@ -74,8 +74,11 @@ class STDisplayer():
         return topic
 
 
-if __name__ == '__main__':
-    st.title('Google Search Trends')
+def gt_dashboard():
+    st.markdown(
+        "<h1>Google Search <span style='color: #009e69;'>Trends</span></h1>",
+        unsafe_allow_html=True
+    )
     st.markdown("""
         **What does 'Hit rate' mean?**  
         This is a relative score provided by Google Trends.  

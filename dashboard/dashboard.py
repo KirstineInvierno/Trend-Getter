@@ -5,6 +5,7 @@ import logging
 from insert_phone_number import PhoneNumberInserter
 from insert_topic import TopicInserter
 from insert_subscription import SubscriptionInserter
+import gt_dash
 
 logging.basicConfig(
     format="%(levelname)s | %(asctime)s | %(message)s", level=logging.INFO)
@@ -100,12 +101,35 @@ def subscription() -> None:
 
 
 if __name__ == "__main__":
-    st.title("Trendgetter")
+    st.markdown(
+        """
+    <style>
+    .stApp {
+        background-color: #E1FAF9;
+    }
+    </style>
+    """,
+        unsafe_allow_html=True
+    )
 
-    col1, col2 = st.columns(2)
-    with col1:
-        st.header("Subscribe")
-        subscription()
-    with col2:
-        st.header("Unsubscribe")
-        unsubscribe()
+    st.image("images/trendgetter_logo.png")
+
+    tab1, tab2 = st.tabs(["Bluesky Dashboard", "Google Trends Dashboard"])
+    with tab1:
+        st.markdown(
+            "<h1>Bluesky <span style='color: #009e69;'>Trends</span></h1>",
+            unsafe_allow_html=True
+        )
+
+        dash_tab, sub_tab, unsub_tab = st.tabs(
+            ["Dashboard", "Subscribe", "Unsubscribe"])
+        with dash_tab:
+            pass
+            # Not yet implemented
+        with sub_tab:
+            subscription()
+        with unsub_tab:
+            unsubscribe()
+
+    with tab2:
+        gt_dash.gt_dashboard()
