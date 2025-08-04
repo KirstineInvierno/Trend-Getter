@@ -17,7 +17,7 @@ class Message:
         self.type = message_dict.get("$type")
         self._timestamp = None
         self._timestamp_string = message_dict.get("createdAt")
-        self._json_string = None
+        self._json = None
 
     def _validation(self, message_dict: dict):
         required_fields = [
@@ -42,14 +42,13 @@ class Message:
         return self._timestamp
 
     @property
-    def json_string(self) -> str:
-        if self._json_string is None:
-            json_dict = {
+    def json(self) -> dict:
+        if self._json is None:
+            self._json = {
                 "text": self.text,
                 "langs": self.langs,
                 "$type": self.type,
                 "createdAt": self._timestamp_string
             }
-            self._json_string = json.dumps(json_dict)
 
-        return self._json_string
+        return self._json

@@ -1,5 +1,6 @@
 """script to upload Message objects to the s3 bucket"""
 import os
+import json
 from datetime import datetime
 import time
 import uuid
@@ -35,7 +36,7 @@ class S3Loader:
         return date.strftime("%d-%m-%YT%H-%M-%S")
 
     @staticmethod
-    def load_to_s3(data: Message):
+    def load_to_s3(data: list[dict]):
         """uploads message object to s3 as a json"""
         time1 = time.time()
         session = boto3.Session(
@@ -46,12 +47,12 @@ class S3Loader:
 
         client = session.client("s3")
 
-        filename = f"{S3Loader.random_string()}--{S3Loader.format_date(data.timestamp)}.json"
+        filename = f"{S3Loader.random_string()}--{S3Loader.format_date(datetime.now())}.json"
 
         client.put_object(
             Bucket=BUCKET_NAME,
             Key=f'{FILE_PATH}{filename}',
-            Body=data.json_string,
+            Body=json.dumps(data),
             ContentType='application/json'
         )
 
@@ -60,6 +61,18 @@ class S3Loader:
             f"{filename} uploaded to {BUCKET_NAME} in {round(time2-time1, 2)} seconds")
 
         return filename
+
+    @staticmethod
+    def download_json(data: list[dict]):
+        """
+        [FOR TESTING PURPOSES]
+        downloads json in the format it would be uploaded to the s3
+        """
+        filename = f"{S3Loader.random_string()}--{S3Loader.format_date(datetime.now())}.json"
+        with open(filename, "w", encoding="utf-8") as file:
+            json.dump(data, file, indent=2)
+
+        logging.info(f"{filename} saved")
 
 
 if __name__ == "__main__":

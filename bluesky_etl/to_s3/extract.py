@@ -1,4 +1,6 @@
 """Extract script to read live data from the Bluesky firehose API"""
+import time
+import datetime
 import logging
 from atproto import FirehoseSubscribeReposClient, parse_subscribe_repos_message, CAR, models
 from utilities import Message
@@ -9,12 +11,27 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
+TIME_PERIOD_LENGTH = 600  # seconds
+
 
 class BlueSkyFirehose:
     """Tracks all Bluesky messages"""
 
     def __init__(self) -> None:
         self.client = FirehoseSubscribeReposClient()
+        self.time_period_start = time.time()
+        self.json_list = []
+
+    def message_handling(self, message: Message):
+        self.json_list.append(message.json)
+        current_time = time.time()
+        if current_time-self.time_period_start < TIME_PERIOD_LENGTH:
+            return False
+        S3Loader.load_to_s3(self.json_list)
+        # S3Loader.download_json(self.json_list)
+        self.time_period_start = current_time
+        self.json_list = []
+        return True
 
     def extract_message(self, message) -> None:
         """Reads a message from the stream and prints the raw output if it is a post"""
@@ -28,17 +45,18 @@ class BlueSkyFirehose:
 
         for op in commit.ops:
             if op.action == "create" and op.cid:
+                print("Compiling posts...", end="\r")
                 raw_message = car.blocks.get(op.cid)
                 if not raw_message:
                     continue
                 if raw_message.get("$type") == "app.bsky.feed.post" \
                     and raw_message.get("langs") \
                         and "en" in raw_message.get("langs"):
-                    message_obj = Message(raw_message)
-                    S3Loader.load_to_s3(message_obj)
+                    self.message_handling(Message(raw_message))
 
     def start(self) -> None:
         """Starts the firehose stream"""
+        logging.info("Starting firehose stream")
         self.client.start(self.extract_message)
 
 
