@@ -14,7 +14,7 @@ class BlueSkyFirehose:
 
     def __init__(self) -> None:
         self.client = FirehoseSubscribeReposClient()
-        # self.transformer = MessageTransformer()
+        self.transformer = MessageTransformer({})
 
     def extract_message(self, message) -> None:
         """Reads a message from the stream and prints the raw output if it is a post"""
