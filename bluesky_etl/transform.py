@@ -6,20 +6,15 @@ DataFrame ready to load into the database
 
 # pylint: disable=W1203
 
-import os
 from datetime import datetime
 import time
 import logging
-from collections.abc import Callable
-from dotenv import load_dotenv
 import pandas as pd
-from pandas import DataFrame
 from transformers import pipeline
-import sqlalchemy
-from sqlalchemy import Engine
+from collections.abc import Callable
+
 
 TRANSFORMER_MODEL = "finiteautomata/bertweet-base-sentiment-analysis"
-load_dotenv()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -29,29 +24,7 @@ logging.basicConfig(
 
 class MessageError(Exception):
     """Error for when creating Message object"""
-
-
-class Utility:
-    """static methods for reusability"""
-    @staticmethod
-    def get_connection() -> Engine:
-        """returns a sqlalchemy engine to connect to the database"""
-        host = os.getenv("DB_HOST")
-        user = os.getenv("DB_USER")
-        password = os.getenv("DB_PASSWORD")
-        database = os.getenv("DB_NAME")
-        engine = sqlalchemy.create_engine(
-            f"postgresql+psycopg2://{user}:{password}@{host}/{database}")
-        return engine
-
-    @staticmethod
-    def get_topics() -> DataFrame:
-        """fetches topics from the db and returns it as a df"""
-        engine = Utility.get_connection()
-        topics = pd.read_sql_table(
-            'topic', con=engine, schema='bluesky')
-
-        return topics
+    pass
 
 
 class Message:
@@ -78,6 +51,9 @@ class Message:
             if field not in message_dict:
                 raise MessageError(
                     f"Your message is missing the required field: {field} ")
+        if "en" not in message_dict["langs"]:
+            raise MessageError(
+                f"Message must be in english ")
 
     @property
     def timestamp(self) -> datetime:
@@ -92,10 +68,10 @@ class Message:
 class MessageTransformer:
     """Transforms API messages into DataFrames for database loading"""
 
-    def __init__(self, sentiment_model: str = TRANSFORMER_MODEL):
+    def __init__(self, topics_dict: dict, sentiment_model: str = TRANSFORMER_MODEL):
         self.sentiment_model = sentiment_model
         self._sentiment_pipeline = None
-        self._topics = None
+        self._topics = topics_dict
 
     @property
     def sentiment_pipeline(self) -> Callable:
@@ -103,17 +79,6 @@ class MessageTransformer:
         if self._sentiment_pipeline is None:
             self._sentiment_pipeline = pipeline(model=self.sentiment_model)
         return self._sentiment_pipeline
-
-    @property
-    def topics(self) -> pd.DataFrame:
-        """Lazy loading topics"""
-        if self._topics is None:
-            logging.info("Fetching topics from database...")
-            time1 = time.time()
-            self._topics = Utility.get_topics()
-            time2 = time.time()
-            logging.info(f"Fetched topics in {round(time2-time1, 2)} seconds")
-        return self._topics
 
     def get_sentiment(self, text: str) -> dict:
         """
@@ -139,19 +104,15 @@ class MessageTransformer:
             List of topics found, or None if no topics found
         """
         logging.info("Matching topics in topics list...")
-        time1 = time.time()
         topics_found = []
-        for topic_id in self.topics["topic_id"]:
-            topic = self.topics[self.topics["topic_id"] == topic_id].reset_index()[
-                "topic_name"][0]
+
+        for topic in self._topics.keys():
             if topic.lower() in text.lower():
-                topics_found.append((topic_id, topic))
-        time2 = time.time()
-        logging.info(f"Matched topics in {round(time2-time1, 2)} seconds")
+                topics_found.append(topic)
+
         return topics_found
 
-    def create_dataframe(self, topic_id: int,
-                         sentiment: dict, timestamp: datetime) -> pd.DataFrame:
+    def create_dataframe(self, topic_id: str, sentiment: dict, timestamp: datetime) -> pd.DataFrame:
         """Creates a single-row DataFrame with the given data"""
         logging.info("Creating DataFrame...")
         return pd.DataFrame({
@@ -182,7 +143,8 @@ class MessageTransformer:
 
         dataframes = []
         for topic in topics_found:
-            df = self.create_dataframe(topic[0], sentiment, message.timestamp)
+            df = self.create_dataframe(
+                self._topics[topic], sentiment, message.timestamp)
             dataframes.append(df)
 
         time2 = time.time()
@@ -195,7 +157,7 @@ class MessageTransformer:
 def main():
     """Main function"""
     message = Message({
-        'text': 'I love donald trump and cooking and photography',
+        'text': 'I love donald trump',
         'langs': ['en'],
         '$type': 'app.bsky.feed.post',
         'reply': {
