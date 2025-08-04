@@ -27,6 +27,7 @@ class Connection():
                 password=environ["DB_PASSWORD"],
                 dbname=environ["DB_NAME"]
             )
+            logging.info("Successfully connected.")
             return conn
         except Exception as e:
             logging.error("Database connection failed: %s", e)
@@ -39,20 +40,33 @@ class TopicInserter():
     def __init__(self) -> None:
         self.db = Connection()
 
-    def insert_topic(self, topic_name: str) -> None:
-        """Inserts a formatted topic name into the database."""
+    def format_topic(self, topic_name: str) -> str:
+        """Formats a topic name to remove whitespace and capitalisation."""
         topic_name = topic_name.strip().lower()
         if not topic_name:
             raise ValueError("No topic(s) entered.")
+        return topic_name
+
+    def insert_topic(self, topic_name: str) -> int:
+        """Inserts a formatted topic into the database and returns the topic id.
+          If the topic already exists, the topic id of the existing topic will be returned"""
+        topic_name = self.format_topic(topic_name)
 
         conn = self.db.get_connection()
         try:
             with conn:
                 with conn.cursor() as cur:
-                    cur.execute(("""INSERT INTO bluesky.topic (topic_name)
-                                VALUES (%s)
-                                ON CONFLICT (topic_name) DO NOTHING;"""), (topic_name,))
-                    logging.info("Inserted topic: %s", topic_name)
+                    cur.execute(("""SELECT topic_id from bluesky.topic
+                                WHERE topic_name = %s;"""), (topic_name,))
+                    topic_id = cur.fetchone()
+
+                    if not topic_id:
+                        cur.execute("""INSERT INTO bluesky.topic (topic_name)
+                                    VALUES (%s) RETURNING topic_id;""", (topic_name,))
+                        topic_id = cur.fetchone()
+                    if not topic_id:
+                        raise RuntimeError(f"Failed to insert or retrieve topic: {topic_name}")
+                return topic_id[0]
         except Exception as e:
             logging.error("Insert failed: %s", e)
             raise
