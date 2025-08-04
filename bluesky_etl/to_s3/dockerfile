@@ -1,7 +1,7 @@
 FROM python:3.13
 
-COPY requirements.txt ./
-RUN pip3 install -r requirements.txt
+COPY requirements_2.txt ./
+RUN pip3 install -r requirements_2.txt
 
 COPY utilities.py ./
 COPY extract.py ./
