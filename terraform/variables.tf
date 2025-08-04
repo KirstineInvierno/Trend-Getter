@@ -8,9 +8,3 @@ variable "DB_PASSWORD" {
   description = "The password for the RDS database"
   sensitive   = true
 }
-
-variable "EMAIL" {
-  type        = string
-  description = "To verify a sender email with SES"
-  sensitive   = true
-}
