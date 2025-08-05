@@ -67,6 +67,7 @@ class BlueSkyFirehose:
                         and raw_message.get("langs") \
                             and "en" in raw_message.get("langs"):
                         self.message_handling(Message(raw_message))
+                        logging.info("English message found")
         except Exception as error:
             logging.error(f"Error occurred during message extraction: {error}")
 
