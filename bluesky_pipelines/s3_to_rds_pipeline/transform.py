@@ -1,25 +1,16 @@
-"""
-Transform script:
-Takes a message extracted from the API and transforms it to a 
-DataFrame ready to load into the database
-"""
-
+"""Transform script: Takes a message extracted from the API and transforms it to a 
+DataFrame ready to load into the database. """
 # pylint: disable=W1203
 
-import os
 from datetime import datetime
 import time
 import logging
-from collections.abc import Callable
-from dotenv import load_dotenv
 import pandas as pd
-from pandas import DataFrame
 from transformers import pipeline
-import sqlalchemy
-from sqlalchemy import Engine
+from collections.abc import Callable
+
 
 TRANSFORMER_MODEL = "finiteautomata/bertweet-base-sentiment-analysis"
-load_dotenv()
 
 logging.basicConfig(
     level=logging.INFO,
@@ -28,34 +19,12 @@ logging.basicConfig(
 
 
 class MessageError(Exception):
-    """Error for when creating Message object"""
-
-
-class Utility:
-    """static methods for reusability"""
-    @staticmethod
-    def get_connection() -> Engine:
-        """returns a sqlalchemy engine to connect to the database"""
-        host = os.getenv("DB_HOST")
-        user = os.getenv("DB_USER")
-        password = os.getenv("DB_PASSWORD")
-        database = os.getenv("DB_NAME")
-        engine = sqlalchemy.create_engine(
-            f"postgresql+psycopg2://{user}:{password}@{host}/{database}")
-        return engine
-
-    @staticmethod
-    def get_topics() -> DataFrame:
-        """fetches topics from the db and returns it as a df"""
-        engine = Utility.get_connection()
-        topics = pd.read_sql_table(
-            'topic', con=engine, schema='bluesky')
-
-        return topics
+    """Error for when creating Message object."""
+    pass
 
 
 class Message:
-    """message recieved from API"""
+    """Message received from API."""
 
     def __init__(self, message_dict: dict):
         self._validation(message_dict)
@@ -78,10 +47,13 @@ class Message:
             if field not in message_dict:
                 raise MessageError(
                     f"Your message is missing the required field: {field} ")
+        if "en" not in message_dict["langs"]:
+            raise MessageError(
+                f"Message must be in english ")
 
     @property
     def timestamp(self) -> datetime:
-        """Extracts timestamp from message"""
+        """Extracts timestamp from message."""
         if self._timestamp is None:
             temp_timestamp = self._timestamp_string
             self._timestamp = datetime.fromisoformat(temp_timestamp)
@@ -90,12 +62,12 @@ class Message:
 
 
 class MessageTransformer:
-    """Transforms API messages into DataFrames for database loading"""
+    """Transforms API messages into DataFrames for database loading."""
 
-    def __init__(self, sentiment_model: str = TRANSFORMER_MODEL):
+    def __init__(self, topics_dict: dict, sentiment_model: str = TRANSFORMER_MODEL):
         self.sentiment_model = sentiment_model
         self._sentiment_pipeline = None
-        self._topics = None
+        self._topics = topics_dict
 
     @property
     def sentiment_pipeline(self) -> Callable:
@@ -104,24 +76,10 @@ class MessageTransformer:
             self._sentiment_pipeline = pipeline(model=self.sentiment_model)
         return self._sentiment_pipeline
 
-    @property
-    def topics(self) -> pd.DataFrame:
-        """Lazy loading topics"""
-        if self._topics is None:
-            logging.info("Fetching topics from database...")
-            time1 = time.time()
-            self._topics = Utility.get_topics()
-            time2 = time.time()
-            logging.info(f"Fetched topics in {round(time2-time1, 2)} seconds")
-        return self._topics
-
     def get_sentiment(self, text: str) -> dict:
-        """
-        Analyzes text sentiment using transformer model
-
+        """Analyses text sentiment using transformer model
         Returns:
-            dict with label ('POS', 'NEG', 'NEU') and confidence score (0-1)
-        """
+            dict with label ('POS', 'NEG', 'NEU') and confidence score (0-1)"""
         logging.info("Running sentiment analysis...")
         time1 = time.time()
         llm_pipeline = self.sentiment_pipeline
@@ -132,27 +90,18 @@ class MessageTransformer:
         return max(sentiments, key=lambda sentiment: sentiment.get("score"))
 
     def find_topics_in_text(self, text: str) -> list[str]:
-        """
-        Finds which subscribed topics are mentioned in the text
-
-        Returns:
-            List of topics found, or None if no topics found
-        """
+        """Finds which subscribed topics are mentioned in the text."""
         logging.info("Matching topics in topics list...")
-        time1 = time.time()
         topics_found = []
-        for topic_id in self.topics["topic_id"]:
-            topic = self.topics[self.topics["topic_id"] == topic_id].reset_index()[
-                "topic_name"][0]
+
+        for topic in self._topics.keys():
             if topic.lower() in text.lower():
-                topics_found.append((topic_id, topic))
-        time2 = time.time()
-        logging.info(f"Matched topics in {round(time2-time1, 2)} seconds")
+                topics_found.append(topic)
+
         return topics_found
 
-    def create_dataframe(self, topic_id: int,
-                         sentiment: dict, timestamp: datetime) -> pd.DataFrame:
-        """Creates a single-row DataFrame with the given data"""
+    def create_dataframe(self, topic_id: str, sentiment: dict, timestamp: datetime) -> pd.DataFrame:
+        """Creates a single-row DataFrame with the given data."""
         logging.info("Creating DataFrame...")
         return pd.DataFrame({
             "topic_id": [topic_id],
@@ -162,15 +111,9 @@ class MessageTransformer:
         })
 
     def transform(self, message: Message) -> pd.DataFrame | None:
-        """
-        Main transformation method: converts message to DataFrame
-
-        Args:
-            message: Dictionary containing message data from API
-
+        """Converts message to DataFrame.
         Returns:
-            DataFrame ready for database loading, or None if no topics found
-        """
+            DataFrame ready for database loading, or None if no topics found."""
         time1 = time.time()
         logging.info("Begin transform script")
         topics_found = self.find_topics_in_text(message.text)
@@ -182,7 +125,8 @@ class MessageTransformer:
 
         dataframes = []
         for topic in topics_found:
-            df = self.create_dataframe(topic[0], sentiment, message.timestamp)
+            df = self.create_dataframe(
+                self._topics[topic], sentiment, message.timestamp)
             dataframes.append(df)
 
         time2 = time.time()
@@ -193,9 +137,9 @@ class MessageTransformer:
 
 
 def main():
-    """Main function"""
+    """Main function."""
     message = Message({
-        'text': 'I love donald trump and cooking and photography',
+        'text': 'I love donald trump',
         'langs': ['en'],
         '$type': 'app.bsky.feed.post',
         'reply': {
