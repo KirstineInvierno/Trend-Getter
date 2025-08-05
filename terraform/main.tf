@@ -219,6 +219,15 @@ data "aws_iam_policy_document" "lambda_permissions" {
   statement {
     effect = "Allow"
     actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents"
+    ]
+    resources = ["arn:aws:logs:*:*:*"]
+  }
+  statement {
+    effect = "Allow"
+    actions = [
       "lambda:InvokeFunction"
     ]
     resources = ["*"]
