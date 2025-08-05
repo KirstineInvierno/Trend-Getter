@@ -1,6 +1,4 @@
-"""
-Test file for message transformer module
-"""
+""" Test file for message transformer module."""
 
 import pytest
 import pandas as pd
@@ -10,12 +8,14 @@ from unittest.mock import Mock, patch, MagicMock
 
 from transform import Message, MessageTransformer, MessageError
 
+TOPICS_DICT = {'trump': 1, 'biden': 2}
+
 
 class TestMessage:
-    """Test cases for Message class"""
+    """Test cases for Message class."""
 
     def test_valid_message_creation(self):
-        """Test creating a valid Message object"""
+        """Test creating a valid Message object."""
         message_dict = {
             'text': 'Test message',
             'langs': ['en'],
@@ -32,7 +32,7 @@ class TestMessage:
             '2025-07-28T12:36:42.475Z')
 
     def test_missing_required_field_raises_error(self):
-        """Test that missing required fields raise MessageError"""
+        """Test that missing required fields raise MessageError."""
         incomplete_message = {
             'text': 'Test message',
             'langs': ['en'],
@@ -46,7 +46,7 @@ class TestMessage:
         "text", "langs", "$type", "createdAt"
     ])
     def test_each_required_field_missing(self, missing_field):
-        """Test that each required field individually raises error when missing"""
+        """Test that each required field individually raises error when missing."""
         complete_message = {
             'text': 'Test message',
             'langs': ['en'],
@@ -62,7 +62,7 @@ class TestMessage:
             Message(incomplete_message)
 
     def test_timestamp_property_parsing(self):
-        """Test that timestamp property correctly parses ISO string"""
+        """Test that timestamp property correctly parses ISO string."""
         message_dict = {
             'text': 'Test message',
             'langs': ['en'],
@@ -82,7 +82,7 @@ class TestMessage:
         assert timestamp.second == 42
 
     def test_timestamp_caching(self):
-        """Test that timestamp is cached after first access"""
+        """Test that timestamp is cached after first access."""
         message_dict = {
             'text': 'Test message',
             'langs': ['en'],
@@ -99,13 +99,13 @@ class TestMessage:
 
 
 class TestMessageTransformer:
-    """Test cases for MessageTransformer class"""
+    """Test cases for MessageTransformer class."""
 
     @pytest.fixture
-    def sample_message(self):
-        """example Message object"""
+    def sample_message_2(self):
+        """Example Message object."""
         message_dict = {
-            'text': 'I love football and england',
+            'text': 'I am trump and biden',
             'langs': ['en'],
             '$type': 'app.bsky.feed.post',
             'createdAt': '2025-07-28T12:36:42.475Z'
@@ -114,7 +114,7 @@ class TestMessageTransformer:
 
     @pytest.fixture
     def topics_df(self):
-        """example topics DataFrame"""
+        """Example topics DataFrame."""
         return pd.DataFrame({
             "topic_id": [1, 2, 3, 4, 5],
             "topic_name": ["football", "england", "spain", "cricket", "trump"]
@@ -123,22 +123,23 @@ class TestMessageTransformer:
     @pytest.fixture
     def transformer(self, topics_df):
         """Fixture providing a MessageTransformer instance"""
-        transformer = MessageTransformer()
-        transformer._topics = topics_df  # patching the topics before it accesses the db
+        transformer = MessageTransformer({'trump': 1, 'biden': 2})
+
         return transformer
 
     def test_transformer_initialization(self):
         """Test MessageTransformer initialization"""
-        transformer = MessageTransformer()
+        transformer = MessageTransformer({'trump': 1, 'biden': 2})
 
         assert transformer.sentiment_model == "finiteautomata/bertweet-base-sentiment-analysis"
         assert transformer._sentiment_pipeline is None
-        assert transformer._topics is None
+        assert transformer._topics == {'trump': 1, 'biden': 2}
 
     def test_custom_sentiment_model(self):
         """Test MessageTransformer with custom sentiment model"""
         custom_model = "custom-sentiment-model"
-        transformer = MessageTransformer(sentiment_model=custom_model)
+        transformer = MessageTransformer(
+            {'trump': 1, 'biden': 2}, sentiment_model=custom_model)
 
         assert transformer.sentiment_model == custom_model
 
@@ -148,36 +149,20 @@ class TestMessageTransformer:
         mock_pipeline_instance = Mock()
         mock_pipeline.return_value = mock_pipeline_instance
 
-        # create the pipeline
         pipeline_result = transformer.sentiment_pipeline
 
         mock_pipeline.assert_called_once()
         assert pipeline_result == mock_pipeline_instance
 
-        # return cached pipeline
         pipeline_result2 = transformer.sentiment_pipeline
 
-        # pipeline() should still only be called once
         assert mock_pipeline.call_count == 1
         assert pipeline_result2 == mock_pipeline_instance
         assert pipeline_result is pipeline_result2
 
-    def test_topics_lazy_loading(self, transformer, topics_df):
-        """Test that topics DataFrame is lazily loaded"""
-        # create the DataFrame
-
-        assert isinstance(topics_df, pd.DataFrame)
-        assert 'topic_id' in topics_df.columns
-        assert 'topic_name' in topics_df.columns
-
-        # return cached DataFrame
-        topics_df2 = transformer.topics
-        assert topics_df is topics_df2
-
     @patch('transform.pipeline')
     def test_get_sentiment(self, mock_pipeline, transformer):
         """Test sentiment analysis method"""
-        # mock the pipeline
         mock_pipeline_instance = Mock()
         mock_pipeline.return_value = mock_pipeline_instance
         mock_pipeline_instance.return_value = [
@@ -202,15 +187,13 @@ class TestMessageTransformer:
     def test_find_topics_in_text(self, transformer):
         """Test topic finding in text"""
 
-        # test with topics
-        text_with_topics = "I love football and england is great"
+        text_with_topics = "I am trump and biden"
         topics_found = transformer.find_topics_in_text(text_with_topics)
 
-        assert (1, 'football') in topics_found
-        assert (2, 'england') in topics_found
+        assert 'trump' in topics_found
+        assert 'biden' in topics_found
         assert len(topics_found) == 2
 
-        # no topics
         text_without_topics = "I love cats and dogs"
         topics_found_empty = transformer.find_topics_in_text(
             text_without_topics)
@@ -219,11 +202,11 @@ class TestMessageTransformer:
 
     def test_find_topics_case_insensitive(self, transformer):
         """Test that topic finding is case insensitive"""
-        text = "I love FOOTBALL and England is great"
+        text = "I am TRUMP and Biden "
         topics_found = transformer.find_topics_in_text(text)
 
-        assert (1, 'football') in topics_found
-        assert (2, 'england') in topics_found
+        assert 'trump' in topics_found
+        assert 'biden' in topics_found
         assert len(topics_found) == 2
 
     def test_create_dataframe(self, transformer):
@@ -241,16 +224,16 @@ class TestMessageTransformer:
         assert df.iloc[0]['timestamp'] == timestamp
 
     @patch('transform.pipeline')
-    def test_transform_success(self, mock_pipeline, transformer, sample_message):
+    def test_transform_success(self, mock_pipeline, transformer, sample_message_2):
         """Test successful transformation"""
-        # mock sentiment pipeline
+
         mock_pipeline_instance = Mock()
         mock_pipeline.return_value = mock_pipeline_instance
         mock_pipeline_instance.return_value = [
             {'label': 'POS', 'score': 0.9}
         ]
 
-        result = transformer.transform(sample_message)
+        result = transformer.transform(sample_message_2)
 
         assert isinstance(result, pd.DataFrame)
         assert len(result) >= 1
@@ -284,7 +267,7 @@ class TestMessageTransformer:
         ]
 
         message_dict = {
-            'text': 'football and cricket and england are great',
+            'text': 'trump and cricket and biden',
             'langs': ['en'],
             '$type': 'app.bsky.feed.post',
             'createdAt': '2025-07-28T12:36:42.475Z'
@@ -294,23 +277,21 @@ class TestMessageTransformer:
         result = transformer.transform(message)
 
         assert isinstance(result, pd.DataFrame)
-        # should have football, cricket, england
-        assert len(result) == 3
+        assert len(result) == 2
 
         topics_in_result = result['topic_id'].tolist()
         assert 1 in topics_in_result
         assert 2 in topics_in_result
-        assert 4 in topics_in_result
 
 
 class TestIntegration:
     """Integration tests"""
 
     @pytest.fixture
-    def sample_message(self):
+    def sample_message_3(self):
         """example Message object"""
         message_dict = {
-            'text': 'I love football and trump',
+            'text': 'I am  trump and i like cricket',
             'langs': ['en'],
             '$type': 'app.bsky.feed.post',
             'createdAt': '2025-07-28T12:36:42.475Z'
@@ -328,12 +309,12 @@ class TestIntegration:
     @pytest.fixture
     def transformer(self, topics_df):
         """Fixture providing a MessageTransformer instance"""
-        transformer = MessageTransformer()
-        transformer._topics = topics_df  # patching the topics before it accesses the db
+        transformer = MessageTransformer(
+            {'football': 1, 'trump': 5, 'cricket': 2})
         return transformer
 
     @patch('transform.pipeline')
-    def test_full_pipeline_integration(self, mock_pipeline, transformer, sample_message):
+    def test_full_pipeline_integration(self, mock_pipeline, transformer, sample_message_3):
         """Test the full pipeline from message creation to DataFrame output"""
         mock_pipeline_instance = Mock()
         mock_pipeline.return_value = mock_pipeline_instance
@@ -341,10 +322,10 @@ class TestIntegration:
             {'label': 'POS', 'score': 0.85}
         ]
 
-        result = transformer.transform(sample_message)
+        result = transformer.transform(sample_message_3)
 
         assert isinstance(result, pd.DataFrame)
-        assert len(result) == 2  # trump and football
+        assert len(result) == 2  # trump and cricket
         assert all(result['sentiment_label'] == 'POS')
         assert all(result['sentiment_score'] == 0.85)
-        assert result['topic_id'].tolist() == [1, 5]
+        assert result['topic_id'].tolist() == [5, 2]

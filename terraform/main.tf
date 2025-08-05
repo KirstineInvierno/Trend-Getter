@@ -176,8 +176,80 @@ resource "aws_instance" "ec2" {
 }
 
 
-# SNS
+# Lambda function
+# Permissions
 
-resource "aws_sns_topic" "user_notifications" {
-  name = "c18-trend-getter-sns"
+data "aws_iam_policy_document" "lambda_role" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+data "aws_iam_policy_document" "lambda_permissions" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "s3:ListBucket",
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject"
+    ]
+    resources = [
+      "arn:aws:s3:::c18-trend-getter-s3",
+      "arn:aws:s3:::c18-trend-getter-s3/*"
+    ]
+  }
+  statement {
+    effect = "Allow"
+    actions = [
+      "ses:SendEmail",
+      "ses:SendRawEmail"
+    ]
+    resources = [
+      "arn:aws:ses:eu-west-2:129033205317:identity/trendgetterupdates@gmail.com"
+    ]
+  }
+}
+
+resource "aws_iam_role" "lambda_role" {
+  name               = "c18-data-getter-lambda-role"
+  assume_role_policy = data.aws_iam_policy_document.lambda_role.json
+}
+
+resource "aws_iam_policy" "lambda_s3_policy" {
+  name   = "c18-data-getter-lambda-s3-policy"
+  policy = data.aws_iam_policy_document.lambda_permissions.json
+}
+
+resource "aws_iam_role_policy_attachment" "lambda_s3_attach" {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = aws_iam_policy.lambda_s3_policy.arn
+}
+
+resource "aws_lambda_function" "lambda_function" {
+  function_name = "c18-trend-getter-lambda-function"
+  role          = aws_iam_role.lambda_role.arn
+  package_type  = "Image"
+  image_uri     = "129033205317.dkr.ecr.eu-west-2.amazonaws.com/trend-getter-lambda-ecr:latest"
+  memory_size   = 7168
+  timeout       = 300
+  architectures = ["x86_64"]
+
+  environment {
+    variables = {
+      DB_HOST     = var.DB_HOST
+      DB_PORT     = var.DB_PORT
+      DB_USER     = var.DB_USERNAME
+      DB_PASSWORD = var.DB_PASSWORD
+      DB_NAME     = var.DB_NAME
+      DB_SCHEMA   = var.DB_SCHEMA
+    }
+  }
 }
