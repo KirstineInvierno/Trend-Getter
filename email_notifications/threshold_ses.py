@@ -4,7 +4,6 @@ import boto3
 from dotenv import load_dotenv
 from botocore.exceptions import ClientError
 from email_notifications.threshold_check import DataGetter, ThresholdChecker
-from load import DBLoader
 
 
 load_dotenv()
@@ -100,13 +99,14 @@ class Sender():
 
 
 if __name__ == "__main__":
-    loader = DBLoader()
-    dgetter = DataGetter(loader)
+    dgetter = DataGetter()
     print(dgetter.subscriptions_dict)
     tchecker = ThresholdChecker()
 
     subs = tchecker.check_all_thresholds(
         dgetter.subscriptions_dict, dgetter.mentions_df)
+
     print(subs)
+
     sender = Sender()
     sender.send_all_emails(subs)
