@@ -1,6 +1,6 @@
 """Tests for load script"""
 import sqlalchemy
-from load import DBLoader
+from load_to_rds import DBLoader
 
 
 def test_get_engine_returns_engine():
