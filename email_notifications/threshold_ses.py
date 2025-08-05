@@ -3,7 +3,7 @@ from os import environ
 import boto3
 from dotenv import load_dotenv
 from botocore.exceptions import ClientError
-from email_notifications.threshold_check import DataGetter, ThresholdChecker
+from threshold_check import DataGetter, ThresholdChecker
 
 
 load_dotenv()
@@ -16,7 +16,7 @@ class Sender():
         """Initializes instances with ses client"""
         self.ses_client = self.get_ses_client()
 
-    def create_email_from_dict(self, subscription_dict: dict) -> str:
+    def create_email_from_dict(self, subscription_dict: dict) -> dict:
         """Creates HTML to be sent in email"""
 
         subject = f"Activity Spike relating to {subscription_dict['topic_name']}"
@@ -36,7 +36,7 @@ class Sender():
         email_dict = {'subject': subject, 'text': body_text, 'html': body_html}
         return email_dict
 
-    def get_ses_client(self):
+    def get_ses_client(self) -> boto3.Client:
         """Returns a ses client to use to send emails"""
         region = environ["AWS_DEFAULT_REGION"]
         access_key = environ["AWS_ACCESS_KEY_ID"]
@@ -77,7 +77,7 @@ class Sender():
         except ClientError:
             print(f'{subscription_dict['email']} not verified')
 
-    def send_all_emails(self, subs_list: list[dict]):
+    def send_all_emails(self, subs_list: list[dict]) -> None:
         """Calls send_email function for each notification required"""
         for subscription in subs_list:
             email_dict = self.create_email_from_dict(subscription)
