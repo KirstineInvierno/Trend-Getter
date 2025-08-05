@@ -10,16 +10,6 @@ import json
 
 class TestS3Loader:
 
-    @pytest.mark.parametrize('test_str', [
-        "this",
-        "an",
-        "things",
-        "pathological",
-        "something",
-    ])
-    def test_my_regex(self, test_str):
-        assert (re.match("\w+", test_str))
-
     def test_random_string_is_uuid(self):
         result = S3Loader.random_string()
         assert isinstance(result, str)
