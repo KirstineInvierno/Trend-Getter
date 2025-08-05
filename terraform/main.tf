@@ -224,8 +224,8 @@ resource "aws_iam_role" "lambda_role" {
 }
 
 resource "aws_iam_policy" "lambda_s3_policy" {
-  name               = "c18-data-getter-lambda-s3-policy"
-  policy             = data.aws_iam_policy_document.lambda_permissions.json
+  name   = "c18-data-getter-lambda-s3-policy"
+  policy = data.aws_iam_policy_document.lambda_permissions.json
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_s3_attach" {
