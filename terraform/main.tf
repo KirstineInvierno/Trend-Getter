@@ -184,8 +184,11 @@ data "aws_iam_policy_document" "lambda_role" {
     effect = "Allow"
 
     principals {
-      type        = "Service"
-      identifiers = ["lambda.amazonaws.com"]
+      type = "Service"
+      identifiers = [
+        "lambda.amazonaws.com",
+        "scheduler.amazonaws.com"
+      ]
     }
 
     actions = ["sts:AssumeRole"]
@@ -215,6 +218,15 @@ data "aws_iam_policy_document" "lambda_permissions" {
     resources = [
       "arn:aws:ses:eu-west-2:129033205317:identity/trendgetterupdates@gmail.com"
     ]
+  }
+  statement {
+    effect = "Allow"
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents"
+    ]
+    resources = ["arn:aws:logs:*:*:*"]
   }
 }
 
