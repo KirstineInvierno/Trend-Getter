@@ -1,4 +1,4 @@
-'''Script sends email notifications to email list'''
+"""Script sends email notifications to email list"""
 from os import environ
 import boto3
 from dotenv import load_dotenv
@@ -10,20 +10,14 @@ load_dotenv()
 
 
 class Sender():
-    '''
-    Class which sends emails
-    '''
+    """Class which sends emails"""
 
     def __init__(self):
-        '''
-        Initializes instances with ses client
-        '''
+        """Initializes instances with ses client"""
         self.ses_client = self.get_ses_client()
 
     def create_email_from_dict(self, subscription_dict: dict) -> str:
-        '''
-        Creates HTML to be sent in email
-        '''
+        """Creates HTML to be sent in email"""
 
         subject = f"Activity Spike relating to {subscription_dict['topic_name']}"
 
@@ -43,9 +37,7 @@ class Sender():
         return email_dict
 
     def get_ses_client(self):
-        '''
-        Returns a ses client to use to send emails
-        '''
+        """Returns a ses client to use to send emails"""
         region = environ["AWS_DEFAULT_REGION"]
         access_key = environ["AWS_ACCESS_KEY_ID"]
         secret_key = environ['AWS_SECRET_ACCESS_KEY']
@@ -59,10 +51,7 @@ class Sender():
         return ses_client
 
     def send_email(self, subscription_dict: dict, email_dict: dict) -> None:
-        '''
-        Sends a notification email 
-        '''
-        print('sending')
+        """Sends a notification email"""
         try:
             response = self.ses_client.send_email(
                 Source=environ['SENDER_EMAIL'],
@@ -85,14 +74,11 @@ class Sender():
                     }
                 }
             )
-            print(response, 'sent')
         except ClientError:
             print(f'{subscription_dict['email']} not verified')
 
     def send_all_emails(self, subs_list: list[dict]):
-        '''
-        Calls send_email function for each notification required
-        '''
+        """Calls send_email function for each notification required"""
         for subscription in subs_list:
             email_dict = self.create_email_from_dict(subscription)
             self.send_email(subscription, email_dict)
@@ -100,13 +86,10 @@ class Sender():
 
 if __name__ == "__main__":
     dgetter = DataGetter()
-    print(dgetter.subscriptions_dict)
     tchecker = ThresholdChecker()
 
     subs = tchecker.check_all_thresholds(
         dgetter.subscriptions_dict, dgetter.mentions_df)
-
-    print(subs)
 
     sender = Sender()
     sender.send_all_emails(subs)
