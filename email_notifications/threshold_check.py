@@ -16,7 +16,7 @@ class DataGetter():
         self.sql_conn = self.get_sql_conn()
         self.subscriptions_dict = self.get_subscriptions_data()
         self.mentions_df = self.get_recent_mentions()
-        self.topics_dict = self.get_topics_dict()
+        self.topics_dict = self.get_topics_dict(100)
 
     def get_subscriptions_data(self) -> dict:
         """Obtains the current notification subscriptions from RDS"""
@@ -89,7 +89,3 @@ class ThresholdChecker():
                 subscriptions_dict[row]['mention_count'] = count
                 thresholds_met.append(subscriptions_dict[row])
         return thresholds_met
-
-
-dg = DataGetter()
-print(dg.get_topics_list(50))
