@@ -1,27 +1,27 @@
-'''
-This script loads a prepared message dataframe into the RDS database 
-'''
+"""Script to load a prepared message dataframe into the RDS database."""
 
 from os import environ
+import time
 import pandas as pd
 import sqlalchemy
 import psycopg2
 from dotenv import load_dotenv
-
+import logging
 
 
 load_dotenv()
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
 
 class DBLoader():
-    '''
-    Class which deals with the upload of the data
-    '''
+    """Class to handle uploading data."""
 
     def get_sql_conn(self):
-        '''
-        Returns connection to RDS
-        '''
+        """Returns connection to the RDS."""
         host = environ["DB_HOST"]
         user = environ["DB_USER"]
         password = environ["DB_PASSWORD"]
@@ -32,9 +32,7 @@ class DBLoader():
 
     def upload_df_to_mention(self, df: pd.DataFrame,
                              engine: sqlalchemy.engine, schema: str) -> None:
-        '''
-        Performs the upload to the RDS
-        '''
+        """Handles upload to the RDS."""
         with engine.begin() as conn:
             df.to_sql(
                 'mention',
@@ -49,7 +47,14 @@ class DBLoader():
 if __name__ == '__main__':
     loader = DBLoader()
     df = pd.DataFrame()
-    print('connecting')
+    time1 = time.time()
+    logging.info('Connecting...')
     con = loader.get_sql_conn()
-    print('connected')
+    time2 = time.time()
+    logging.info(f'Connected in {round(time2-time1, 2)} seconds')
+    logging.info('Uploading...')
     loader.upload_df_to_mention(engine=con, df=df, schema='bluesky')
+    time3 = time.time()
+    logging.info(f'Uploaded in {round(time3-time2, 2)} seconds')
+    logging.info(
+        f'Load completed in a total of {round(time3-time1, 2)} seconds')
