@@ -11,6 +11,8 @@ from utilities import Message
 
 
 logging.basicConfig(
+    filename="pipeline.log",
+    filemode="a",
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
