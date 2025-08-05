@@ -178,9 +178,9 @@ resource "aws_instance" "ec2" {
 
 # SNS
 
-resource "aws_sns_topic" "user_notifications" {
+/*resource "aws_sns_topic" "user_notifications" {
   name = "c18-trend-getter-sns"
-}
+}*/
 
 # Lambda function
 # Permissions

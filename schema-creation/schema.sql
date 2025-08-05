@@ -20,6 +20,7 @@ CREATE TABLE bluesky.user_topic (
     user_id INT NOT NULL,
     topic_id INT NOT NULL,
     active BOOLEAN NOT NULL,
+    threshold INT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES bluesky.users (user_id) ON DELETE CASCADE,
     FOREIGN KEY (topic_id) REFERENCES bluesky.topic (topic_id) ON DELETE CASCADE
 );
