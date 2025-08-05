@@ -46,7 +46,7 @@ class DataGetter():
     def get_ten_minutes_ago(self) -> str:
         """Returns a string of timestamp ten minutes ago for use in the sql query"""
         now = self.get_now()
-        ten_ago = now - timedelta(minutes=10)
+        ten_ago = now - timedelta(days=50)
         ten_ago_string = ten_ago.strftime("%Y-%m-%d %H:%M:%S")
         return ten_ago_string
 
@@ -80,6 +80,6 @@ class ThresholdChecker():
             if count:
                 subscriptions_dict[row]['mention_count'] = count
                 thresholds_met.append(subscriptions_dict[row])
-                print(row, self.check_threshold(
-                    subscriptions_dict[row], mentions_df))
         return thresholds_met
+
+    def check_threshold_for_bot(self):

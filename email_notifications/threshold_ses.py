@@ -3,7 +3,7 @@ from os import environ
 import boto3
 from dotenv import load_dotenv
 from botocore.exceptions import ClientError
-from email_notifications.threshold_check import DataGetter, ThresholdChecker
+from threshold_check import DataGetter, ThresholdChecker
 
 
 load_dotenv()
@@ -23,7 +23,7 @@ class Sender():
 
         body_text = ("Over the last ten minutes, there have been over"
                      f"{subscription_dict['threshold']} "
-                     f"mentions of {subscription_dict['topic_name']}."
+                     f"mentions of {subscription_dict['topic_name']}. "
                      f"In total, there were {subscription_dict['mention_count']}.")
 
         body_html = f"""<html>
@@ -48,6 +48,7 @@ class Sender():
             aws_access_key_id=access_key,
             aws_secret_access_key=secret_key,
         )
+
         return ses_client
 
     def send_email(self, subscription_dict: dict, email_dict: dict) -> None:
