@@ -9,13 +9,14 @@ import boto3
 from dotenv import load_dotenv
 import pandas as pd
 from transform import Message, MessageTransformer
-from load import DBLoader
+from bluesky_pipelines.s3_to_rds_pipeline.load_to_rds import DBLoader
 
 logging.basicConfig(
     format="%(levelname)s | %(asctime)s | %(message)s", level=logging.INFO)
 
 BUCKET = "c18-trend-getter-s3"
 PREFIX = "bluesky/raw_posts/"
+
 
 class S3Connection():
     """Handles loading environment variables and establishes a connection to the S3 bucket."""
@@ -37,6 +38,7 @@ class S3Connection():
         """Returns the boto3 S3 client."""
         return self.s3
 
+
 class DatabaseTopicExtractor:
     """Connects to the RDS to obtain a dictionary of topics."""
 
@@ -56,6 +58,7 @@ class DatabaseTopicExtractor:
             logging.error("Unable to connect to RDS. Error: %s", e)
             return {}
 
+
 class S3FileExtractor():
     """Extracts metadata and file content from an S3 bucket."""
 
@@ -72,9 +75,9 @@ class S3FileExtractor():
             logging.error("No files found in S3 bucket.")
             raise FileNotFoundError("No files found in S3 bucket.")
 
-        # Sort objects by LastModified descending
         latest_object = max(objects, key=lambda x: x["LastModified"])
         return latest_object["Key"]
+
 
 class Converter():
     """Class to convert extracted S3 file into a pandas Dataframe."""

@@ -1,12 +1,9 @@
-'''
-This script loads a prepared message dataframe into the RDS database 
-'''
+"""Script to load a prepared message dataframe into the RDS database."""
 
 from os import environ
 import time
 import pandas as pd
 import sqlalchemy
-import psycopg2
 from dotenv import load_dotenv
 import logging
 
@@ -20,14 +17,10 @@ logging.basicConfig(
 
 
 class DBLoader():
-    '''
-    Class which deals with the upload of the data
-    '''
+    """Class to handle uploading data."""
 
     def get_sql_conn(self):
-        '''
-        Returns connection to RDS
-        '''
+        """Returns connection to the RDS."""
         host = environ["DB_HOST"]
         user = environ["DB_USER"]
         password = environ["DB_PASSWORD"]
@@ -38,9 +31,7 @@ class DBLoader():
 
     def upload_df_to_mention(self, df: pd.DataFrame,
                              engine: sqlalchemy.engine, schema: str) -> None:
-        '''
-        Performs the upload to the RDS
-        '''
+        """Handles upload to the RDS."""
         with engine.begin() as conn:
             df.to_sql(
                 'mention',
