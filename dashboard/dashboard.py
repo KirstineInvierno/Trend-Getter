@@ -13,7 +13,12 @@ logging.basicConfig(
     format="%(levelname)s | %(asctime)s | %(message)s", level=logging.INFO)
 
 
-@st.cache_data(ttl="1000s")
+class RDSLoadError(Exception):
+    """Exception raised when loading from an RDS failes"""
+    pass
+
+
+@st.cache_data(ttl="300s")
 def load_mentions():
     connection = Connection()
     conn = connection.get_connection()
@@ -28,10 +33,10 @@ def load_mentions():
 
     except Exception as e:
         logging.error("loading of mentions failed: %s", e)
-        raise
+        raise RDSLoadError("loading of mentions failed") from e
 
 
-@st.cache_data(ttl="1000s")
+@st.cache_data(ttl="300s")
 def load_topics():
     connection = Connection()
     conn = connection.get_connection()
@@ -45,7 +50,7 @@ def load_topics():
 
     except Exception as e:
         logging.error("loading of topics failed: %s", e)
-        raise
+        raise RDSLoadError("loading of topics failed") from e
 
 
 def validate_phone_number(phone_number: str) -> bool:
@@ -172,7 +177,8 @@ def topic_trends(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
         x=alt.X('timestamp:T', axis=alt.Axis(format="%b %d"), title="Date"),
         y=alt.Y('mentions:Q', title='Total mentions'),
         color=alt.Color('topic_name:N', title="Topic"),
-        tooltip=["timestamp", "mentions", "topic_name"]
+        tooltip=["timestamp", "mentions", "topic_name"]).configure(
+        background='#EBF7F7'
     ).properties(title='Mentions by topic per day')
 
     st.altair_chart(line_chart)
@@ -214,6 +220,8 @@ def topic_trends_by_hour(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
         y=alt.Y("mentions:Q", axis=alt.Axis(title="Mentions")),
         color=alt.Color("topic_name:N", title="Topic"),
         tooltip=["hour", "mentions", "topic_name"]
+    ).configure(
+        background='#EBF7F7'
     ).properties(title=f"Hourly Mentions on {selected_date}")
 
     st.altair_chart(chart, use_container_width=True)
