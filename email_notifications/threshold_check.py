@@ -16,7 +16,7 @@ class DataGetter():
         self.sql_conn = self.get_sql_conn()
         self.subscriptions_dict = self.get_subscriptions_data()
         self.mentions_df = self.get_recent_mentions()
-        self.topics_dict = self.get_topics_dict(100)
+        self.topics_dict = self.get_topics_dict(5)
 
     def get_subscriptions_data(self) -> dict:
         """Obtains the current notification subscriptions from RDS"""
@@ -47,7 +47,7 @@ class DataGetter():
     def get_ten_minutes_ago(self) -> str:
         """Returns a string of timestamp ten minutes ago for use in the sql query"""
         now = self.get_now()
-        ten_ago = now - timedelta(days=50)
+        ten_ago = now - timedelta(minutes=10)
         ten_ago_string = ten_ago.strftime("%Y-%m-%d %H:%M:%S")
         return ten_ago_string
 
