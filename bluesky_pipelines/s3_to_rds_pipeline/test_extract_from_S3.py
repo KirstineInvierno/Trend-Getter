@@ -2,7 +2,7 @@
 import pytest
 import pandas as pd
 from unittest.mock import MagicMock, patch
-from extract import S3Connection, DatabaseTopicExtractor, S3FileExtractor, Converter
+from extract_from_s3 import S3Connection, DatabaseTopicExtractor, S3FileExtractor, Converter
 
 
 class TestS3Connection:
