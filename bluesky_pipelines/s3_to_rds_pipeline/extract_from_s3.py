@@ -24,11 +24,7 @@ class S3Connection():
     def __init__(self) -> None:
         load_dotenv()
         try:
-            self.s3 = boto3.client(
-            "s3",
-            aws_access_key_id=environ["AWS_ACCESS_KEY_ID"],
-            aws_secret_access_key=environ["AWS_SECRET_ACCESS_KEY"]
-        )
+            self.s3 = boto3.client("s3")
             logging.info("Successfully connected to AWS S3.")
         except ConnectionError as e:
             logging.error("Unable to connect to AWS S3. Error: %s", e)
