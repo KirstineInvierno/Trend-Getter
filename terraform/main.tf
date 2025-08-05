@@ -184,11 +184,8 @@ data "aws_iam_policy_document" "lambda_role" {
     effect = "Allow"
 
     principals {
-      type = "Service"
-      identifiers = [
-        "lambda.amazonaws.com",
-        "scheduler.amazonaws.com"
-      ]
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com", "scheduler.amazonaws.com"]
     }
 
     actions = ["sts:AssumeRole"]
@@ -228,6 +225,13 @@ data "aws_iam_policy_document" "lambda_permissions" {
     ]
     resources = ["arn:aws:logs:*:*:*"]
   }
+  statement {
+    effect = "Allow"
+    actions = [
+      "lambda:InvokeFunction"
+    ]
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_role" "lambda_role" {
@@ -263,5 +267,23 @@ resource "aws_lambda_function" "lambda_function" {
       DB_NAME     = var.DB_NAME
       DB_SCHEMA   = var.DB_SCHEMA
     }
+  }
+}
+
+
+# EventBridge Scheduler
+
+resource "aws_scheduler_schedule" "S3-to-RDS-ETL" {
+  name = "c18-trend-getter-S3-to-RDS-ETL-eb"
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  schedule_expression = "rate(10 minutes)"
+
+  target {
+    arn      = aws_lambda_function.lambda_function.arn
+    role_arn = aws_iam_role.lambda_role.arn
   }
 }
