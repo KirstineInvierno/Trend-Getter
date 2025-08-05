@@ -9,7 +9,7 @@ import boto3
 from dotenv import load_dotenv
 import pandas as pd
 from transform import Message, MessageTransformer
-from bluesky_pipelines.s3_to_rds_pipeline.load_to_rds import DBLoader
+from load_to_rds import DBLoader
 
 logging.basicConfig(
     format="%(levelname)s | %(asctime)s | %(message)s", level=logging.INFO)
