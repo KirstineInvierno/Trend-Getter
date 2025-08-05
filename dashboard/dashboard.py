@@ -3,12 +3,48 @@ import streamlit as st
 import re
 import logging
 from insert_phone_number import PhoneNumberInserter
-from insert_topic import TopicInserter
+from insert_topic import TopicInserter, Connection
 from insert_subscription import SubscriptionInserter
 import gt_dash
-
+import pandas as pd
+import altair as alt
 logging.basicConfig(
     format="%(levelname)s | %(asctime)s | %(message)s", level=logging.INFO)
+
+
+@st.cache_data(ttl="1000s")
+def load_mentions():
+    connection = Connection()
+    conn = connection.get_connection()
+    query = """
+            SELECT mention_id,topic_name,timestamp,sentiment_label FROM bluesky.mention
+            join bluesky.topic using(topic_id);
+        """
+    try:
+        with connection.get_connection() as conn:
+            df = pd.read_sql(query, conn)
+        return df
+
+    except Exception as e:
+        logging.error("loading of mentions failed: %s", e)
+        raise
+
+
+@st.cache_data(ttl="1000s")
+def load_topics():
+    connection = Connection()
+    conn = connection.get_connection()
+    query = """
+            SELECT topic_name FROM  bluesky.topic;
+        """
+    try:
+        with connection.get_connection() as conn:
+            df = pd.read_sql(query, conn)
+        return df
+
+    except Exception as e:
+        logging.error("loading of topics failed: %s", e)
+        raise
 
 
 def validate_phone_number(phone_number: str) -> bool:
@@ -100,6 +136,79 @@ def subscription() -> None:
                     f"An error occured while subscribing to a topic: {e}.")
 
 
+def topic_trends(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
+    """Loads an altair line chart that shows trends of a topic per day """
+    options = st.multiselect(
+        "Select a topic to view the number of mentions of that topic per day",
+        topic_df["topic_name"].unique(),
+        default="art",
+        key=5
+    )
+    if not options:
+        st.info("Please select a topic")
+        return
+
+    df = df[df["topic_name"].isin(options)]
+    df['timestamp'] = pd.to_datetime(
+        df['timestamp'])
+
+    df = df.groupby([pd.Grouper(key='timestamp', freq='D'),
+                    "topic_name"]).size().reset_index(name='mentions')
+
+    if df.empty:
+        st.info(f"No mentions for the selected topic(s)")
+
+    line_chart = alt.Chart(df).mark_line(point=True).encode(
+        x=alt.X('timestamp:T', axis=alt.Axis(format="%b %d"), title="Date"),
+        y=alt.Y('mentions:Q', title='Total mentions'),
+        color=alt.Color('topic_name:N', title="Topic"),
+        tooltip=["timestamp", "mentions", "topic_name"]
+    ).properties(title='Mentions by topic per day')
+
+    st.altair_chart(line_chart)
+
+
+def topic_trends_by_hour(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
+    """Displays an hourly line chart for mentions by topic on a selected day."""
+
+    dates = pd.to_datetime(df["timestamp"]).dt.date.unique()
+    selected_date = st.date_input(
+        "Select a date to view the trend of a topic",
+        min_value=min(dates),
+        max_value=max(dates)
+    )
+
+    options = st.multiselect(
+        "Select a topic to view the number of mentions of that topic by hour on a selected day",
+        topic_df["topic_name"].unique(),
+        default="art",
+        key=6,
+    )
+    if not options:
+        st.info("Please select a topic")
+        return
+
+    df["timestamp"] = pd.to_datetime(df["timestamp"])
+    df = df[df["topic_name"].isin(options)]
+    df = df[df["timestamp"].dt.date == selected_date]
+
+    df["hour"] = df["timestamp"].dt.hour
+    df = df.groupby(["hour", "topic_name"]).size().reset_index(name="mentions")
+
+    if df.empty:
+        st.info(f"No mentions for the selected topic(s) on {selected_date}")
+        return
+
+    chart = alt.Chart(df).mark_line(point=True).encode(
+        x=alt.X("hour:Q", axis=alt.Axis(title="Hour of Day")),
+        y=alt.Y("mentions:Q", axis=alt.Axis(title="Mentions")),
+        color=alt.Color("topic_name:N", title="Topic"),
+        tooltip=["hour", "mentions", "topic_name"]
+    ).properties(title=f"Hourly Mentions on {selected_date}")
+
+    st.altair_chart(chart, use_container_width=True)
+
+
 if __name__ == "__main__":
     st.markdown(
         """
@@ -113,6 +222,8 @@ if __name__ == "__main__":
     )
 
     st.image("images/trendgetter_logo.png")
+    df = load_mentions()
+    topic_df = load_topics()
 
     tab1, tab2 = st.tabs(["Bluesky Dashboard", "Google Trends Dashboard"])
     with tab1:
@@ -124,8 +235,9 @@ if __name__ == "__main__":
         dash_tab, sub_tab, unsub_tab = st.tabs(
             ["Dashboard", "Subscribe", "Unsubscribe"])
         with dash_tab:
-            pass
-            # Not yet implemented
+            topic_trends(df, topic_df)
+            st.markdown("---")
+            topic_trends_by_hour(df, topic_df)
         with sub_tab:
             subscription()
         with unsub_tab:
