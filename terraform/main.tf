@@ -271,7 +271,7 @@ resource "aws_scheduler_schedule" "S3-to-RDS-ETL" {
     mode = "OFF"
   }
 
-  schedule_expression = "cron(10 * * * ? *)"
+  schedule_expression = "rate(10 minutes)"
 
   target {
     arn      = aws_lambda_function.lambda_function.arn
