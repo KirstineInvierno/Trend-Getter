@@ -16,6 +16,7 @@ class DataGetter():
         self.sql_conn = self.get_sql_conn()
         self.subscriptions_dict = self.get_subscriptions_data()
         self.mentions_df = self.get_recent_mentions()
+        self.topics_dict = self.get_topics_dict()
 
     def get_subscriptions_data(self) -> dict:
         """Obtains the current notification subscriptions from RDS"""
@@ -53,10 +54,17 @@ class DataGetter():
     def get_recent_mentions(self) -> pd.DataFrame:
         """Gets mentions from previous ten minute cycle from RDS"""
         time_str = self.get_ten_minutes_ago()
-        mentions_df = pd.read_sql(f"""SELECT mention_id, topic_id
-                                  FROM bluesky.mention WHERE timestamp > '{time_str}'""",
+        mentions_df = pd.read_sql(f"""SELECT mention_id, topic_id, topic_name
+                                  FROM bluesky.mention 
+                                    JOIN bluesky.topic USING (topic_id) WHERE timestamp > '{time_str}'""",
                                   con=self.sql_conn)
         return mentions_df
+
+    def get_topics_dict(self, threshold: int) -> dict:
+        """Returns list of topics with over a threshold of mentions"""
+        mentions_vc = dict(self.mentions_df['topic_name'].value_counts(
+        ).loc[lambda x: x > threshold])
+        return mentions_vc
 
 
 class ThresholdChecker():
@@ -82,4 +90,6 @@ class ThresholdChecker():
                 thresholds_met.append(subscriptions_dict[row])
         return thresholds_met
 
-    def check_threshold_for_bot(self):
+
+dg = DataGetter()
+print(dg.get_topics_list(50))
