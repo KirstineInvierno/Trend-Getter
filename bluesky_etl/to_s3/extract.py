@@ -21,6 +21,7 @@ class BlueSkyFirehose:
         self.client = FirehoseSubscribeReposClient()
         self.time_period_start = time.time()
         self.json_list = []
+        self.transformer = MessageTransformer({})
 
     def message_handling(self, message: Message) -> bool:
         """
