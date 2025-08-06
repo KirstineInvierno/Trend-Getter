@@ -30,6 +30,6 @@ variable "DB_SCHEMA" {
 }
 
 variable "AWS_DEFAULT_REGION" {
-  type        = string
-  sensitive   = true
+  type      = string
+  sensitive = true
 }
