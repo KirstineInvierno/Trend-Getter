@@ -120,6 +120,10 @@ resource "aws_ecr_repository" "trend-getter-lambda-ecr" {
   image_tag_mutability = "MUTABLE"
 }
 
+resource "aws_ecr_repository" "c18-trend-getter-notifications-ecr" {
+  name                 = "c18-trend-getter-notifications-ecr"
+  image_tag_mutability = "MUTABLE"
+}
 
 # EC2
 
@@ -270,6 +274,74 @@ resource "aws_iam_role_policy_attachment" "lambda_s3_attach" {
   }
 }*/
 
+## Notifications lambda
+
+data "aws_iam_policy_document" "lambda_role_notif" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+data "aws_iam_policy_document" "lambda_permissions_notif" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "s3:ListBucket",
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject"
+    ]
+    resources = [
+      "arn:aws:s3:::c18-trend-getter-s3",
+      "arn:aws:s3:::c18-trend-getter-s3/*"
+    ]
+  }
+  statement {
+    effect = "Allow"
+    actions = [
+      "ses:SendEmail",
+      "ses:SendRawEmail"
+    ]
+    resources = [
+      "arn:aws:ses:eu-west-2:129033205317:identity/trendgetterupdates@gmail.com"
+    ]
+  }
+}
+
+resource "aws_iam_role" "lambda_role_notif" {
+  name               = "c18-data-getter-notif-lambda-role"
+  assume_role_policy = data.aws_iam_policy_document.lambda_role_notif.json
+}
+
+
+
+resource "aws_lambda_function" "lambda_function_notif" {
+  function_name = "c18-trend-getter-notifications-function"
+  role          = aws_iam_role.lambda_role.arn
+  package_type  = "Image"
+  image_uri     = "129033205317.dkr.ecr.eu-west-2.amazonaws.com/c18-trend-getter-notifications-ecr:latest"
+  memory_size   = 7168
+  timeout       = 300
+  architectures = ["x86_64"]
+
+  environment {
+    variables = {
+      DB_HOST     = var.DB_HOST
+      DB_PORT     = var.DB_PORT
+      DB_USER     = var.DB_USERNAME
+      DB_PASSWORD = var.DB_PASSWORD
+      DB_NAME     = var.DB_NAME
+      DB_SCHEMA   = var.DB_SCHEMA
+    }
+  }
+}
 
 /*resource "aws_scheduler_schedule" "S3-to-RDS-ETL" {
   name = "c18-trend-getter-S3-to-RDS-ETL-eb"
