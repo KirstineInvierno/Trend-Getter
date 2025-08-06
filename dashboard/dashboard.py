@@ -163,7 +163,7 @@ def topic_trends(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
         st.info("Please select a topic")
         return
 
-    df = df[df["topic_name"].isin(options)]
+    df = df[df["topic_name"].isin(options)].copy()
     df['timestamp'] = pd.to_datetime(
         df['timestamp'])
 
@@ -187,6 +187,17 @@ def topic_trends(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
 def topic_trends_by_hour(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
     """Displays an hourly line chart for mentions by topic on a selected day."""
 
+    options = st.multiselect(
+        "Select a topic to view the number of mentions of that topic by hour on a selected day",
+        topic_df["topic_name"].unique(),
+        default="art",
+        key=6,
+    )
+
+    if not options:
+        st.info("Please select a topic")
+        return
+    df = df[df["topic_name"].isin(options)].copy()
     dates = pd.to_datetime(df["timestamp"]).dt.date.unique()
     selected_date = st.date_input(
         "Select a date to view the trend of a topic",
@@ -194,18 +205,8 @@ def topic_trends_by_hour(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
         max_value=max(dates)
     )
 
-    options = st.multiselect(
-        "Select a topic to view the number of mentions of that topic by hour on a selected day",
-        topic_df["topic_name"].unique(),
-        default="art",
-        key=6,
-    )
-    if not options:
-        st.info("Please select a topic")
-        return
-
     df["timestamp"] = pd.to_datetime(df["timestamp"])
-    df = df[df["topic_name"].isin(options)]
+
     df = df[df["timestamp"].dt.date == selected_date]
 
     df["hour"] = df["timestamp"].dt.hour
