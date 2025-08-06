@@ -228,6 +228,35 @@ def topic_trends_by_hour(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
     st.altair_chart(chart, use_container_width=True)
 
 
+def topic_sentiment_pie_chart(df: pd.DataFrame, topic_df: pd.DataFrame):
+    options = st.multiselect(
+        "Select a topic to view the sentiment of its mentions.",
+        topic_df["topic_name"].unique(),
+        default=None,
+        key=7,
+    )
+
+    if not options:
+        st.info("Please select a topic")
+        return
+
+    df = df[df["topic_name"].isin(options)].copy()
+    topic_names = df["topic_name"].unique()
+    title = ", ".join(topic_names)
+    sentiment_df = df["sentiment_label"].value_counts().reset_index()
+    sentiment_df.columns = ["sentiment", "count"]
+    colours = alt.Scale(domain=["NEG", "POS", "NEU"],
+                        range=["#f54242", "#26f213", "#9a9e99"])
+    pie_chart = alt.Chart(sentiment_df).mark_arc().encode(
+        theta=alt.Theta("count:Q"),
+        color=alt.Color("sentiment:N", scale=colours),
+        tooltip=["sentiment", "count"]
+    ).configure(
+        background='#EBF7F7'
+    ).properties(title=f"Public sentiment for {title}")
+    st.altair_chart(pie_chart, use_container_width=True)
+
+
 if __name__ == "__main__":
     st.markdown(
         """
@@ -257,6 +286,8 @@ if __name__ == "__main__":
             topic_trends(df, topic_df)
             st.markdown("---")
             topic_trends_by_hour(df, topic_df)
+            st.markdown("---")
+            topic_sentiment_pie_chart(df, topic_df)
         with sub_tab:
             subscription()
         with unsub_tab:
