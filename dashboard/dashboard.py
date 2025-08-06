@@ -73,6 +73,10 @@ def validate_email(email: str) -> bool:
 
 def unsubscribe() -> None:
     """Allows a user to enter their email and unsubscribe to a topic"""
+    st.markdown("""
+        **Unsubscribe to a topic**  
+       - Unsubscribe from a topic to stop receiving notifications in cases of activity spikes for that topic
+        """)
     email_input = st.text_input("Enter your email to manage subscriptions:")
     if email_input:
         if validate_email(email_input):
@@ -114,6 +118,12 @@ def unsubscribe() -> None:
 def subscription() -> None:
     """Takes an email, topic and a threshold, and subscribes the user to the topic if they
     are not already subscribed. If the user is already subscribed, the threshold is updated."""
+    st.markdown("""
+        **Subscribe to a topic**  
+       - Subscribe to a topic to be emailed when there are activity spikes for the chosen topic
+       - If the topic does not exist, BlueSky will start tracking the topic for mentions.
+       - You can enter a topic you are already subscribed to and change the threshold of mentions
+        """)
     with st.form("Subscribe form"):
         email_input = st.text_input("Enter your email:")
         topic_input = st.text_input("Subscribe to a topic:")
@@ -153,6 +163,13 @@ def subscription() -> None:
 
 def topic_trends(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
     """Loads an altair line chart that shows trends of a topic per day """
+    st.markdown("""
+        **Bluesky topic trends** 
+                
+        This is a live dashboard that tracks topic mentions on bluesky in realtime.
+        - View the trends of chosen topic(s) across multiple days 
+        - View the trends of chosen topic(s) on a specific day
+        """)
     options = st.multiselect(
         "Select a topic to view the number of mentions of that topic per day",
         topic_df["topic_name"].unique(),
