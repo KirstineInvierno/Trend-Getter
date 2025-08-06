@@ -189,7 +189,7 @@ data "aws_iam_policy_document" "lambda_role" {
 
     principals {
       type        = "Service"
-      identifiers = ["lambda.amazonaws.com"]
+      identifiers = ["lambda.amazonaws.com", "scheduler.amazonaws.com"]
     }
 
     actions = ["sts:AssumeRole"]
@@ -219,6 +219,22 @@ data "aws_iam_policy_document" "lambda_permissions" {
     resources = [
       "arn:aws:ses:eu-west-2:129033205317:identity/trendgetterupdates@gmail.com"
     ]
+  }
+  statement {
+    effect = "Allow"
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents"
+    ]
+    resources = ["arn:aws:logs:*:*:*"]
+  }
+  statement {
+    effect = "Allow"
+    actions = [
+      "lambda:InvokeFunction"
+    ]
+    resources = ["*"]
   }
 }
 
@@ -257,6 +273,7 @@ resource "aws_lambda_function" "lambda_function" {
     }
   }
 }
+
 
 ## Notifications lambda
 
@@ -324,5 +341,21 @@ resource "aws_lambda_function" "lambda_function_notif" {
       DB_NAME     = var.DB_NAME
       DB_SCHEMA   = var.DB_SCHEMA
     }
+  }
+}
+
+
+resource "aws_scheduler_schedule" "S3-to-RDS-ETL" {
+  name = "c18-trend-getter-S3-to-RDS-ETL-eb"
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  schedule_expression = "rate(10 minutes)"
+
+  target {
+    arn      = aws_lambda_function.lambda_function.arn
+    role_arn = aws_iam_role.lambda_role.arn
   }
 }
