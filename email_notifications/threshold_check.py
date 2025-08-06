@@ -47,7 +47,7 @@ class DataGetter():
     def get_ten_minutes_ago(self) -> str:
         """Returns a string of timestamp ten minutes ago for use in the sql query"""
         now = self.get_now()
-        ten_ago = now - timedelta(minutes=10)
+        ten_ago = now - timedelta(days=10)
         ten_ago_string = ten_ago.strftime("%Y-%m-%d %H:%M:%S")
         return ten_ago_string
 

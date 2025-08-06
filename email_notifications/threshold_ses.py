@@ -21,7 +21,7 @@ class Sender():
 
         subject = f"Activity Spike relating to {subscription_dict['topic_name']}"
 
-        body_text = ("Over the last ten minutes, there have been over"
+        body_text = ("Over the last ten minutes, there have been over "
                      f"{subscription_dict['threshold']} "
                      f"mentions of {subscription_dict['topic_name']}. "
                      f"In total, there were {subscription_dict['mention_count']}.")
@@ -75,8 +75,8 @@ class Sender():
                     }
                 }
             )
-        except ClientError:
-            print(f'{subscription_dict['email']} not verified')
+        except ClientError as e:
+            print(f'{subscription_dict['email']} not verified?', e)
 
     def send_all_emails(self, subs_list: list[dict]):
         """Calls send_email function for each notification required"""
