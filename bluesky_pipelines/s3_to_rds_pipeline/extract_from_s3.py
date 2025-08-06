@@ -22,7 +22,6 @@ class S3Connection():
     """Handles loading environment variables and establishes a connection to the S3 bucket."""
 
     def __init__(self) -> None:
-        load_dotenv()
         try:
             self.s3 = boto3.client("s3")
             logging.info("Successfully connected to AWS S3.")
