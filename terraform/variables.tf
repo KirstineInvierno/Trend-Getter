@@ -37,6 +37,7 @@ variable "AWS_SECRET_ACCESS_KEY" {
   type      = string
   sensitive = true
 }
+
 variable "AWS_DEFAULT_REGION" {
   type      = string
   sensitive = true

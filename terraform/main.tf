@@ -120,6 +120,10 @@ resource "aws_ecr_repository" "trend-getter-lambda-ecr" {
   image_tag_mutability = "MUTABLE"
 }
 
+resource "aws_ecr_repository" "c18-trend-getter-notifications-ecr" {
+  name                 = "c18-trend-getter-notifications-ecr"
+  image_tag_mutability = "MUTABLE"
+}
 
 # EC2
 
@@ -282,6 +286,13 @@ data "aws_iam_policy_document" "lambda_permissions" {
     ]
     resources = ["*"]
   }
+  statement {
+    effect = "Allow"
+    actions = [
+      "rds:*"
+    ]
+    resources = ["arn:aws:rds:eu-west-2:129033205317:db:c18trendgetterrds"]
+  }
 }
 
 resource "aws_iam_role" "lambda_role" {
@@ -323,20 +334,71 @@ resource "aws_lambda_function" "lambda_function" {
   }
 }
 
+## Notifications lambda
 
-# EventBridge Scheduler
+data "aws_iam_policy_document" "lambda_role_notif" {
+  statement {
+    effect = "Allow"
 
-resource "aws_scheduler_schedule" "S3-to-RDS-ETL" {
-  name = "c18-trend-getter-S3-to-RDS-ETL-eb"
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
 
-  flexible_time_window {
-    mode = "OFF"
+    actions = ["sts:AssumeRole"]
   }
+}
 
-  schedule_expression = "rate(10 minutes)"
+data "aws_iam_policy_document" "lambda_permissions_notif" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "s3:ListBucket",
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject"
+    ]
+    resources = [
+      "arn:aws:s3:::c18-trend-getter-s3",
+      "arn:aws:s3:::c18-trend-getter-s3/*"
+    ]
+  }
+  statement {
+    effect = "Allow"
+    actions = [
+      "ses:SendEmail",
+      "ses:SendRawEmail"
+    ]
+    resources = [
+      "*"
+    ]
+  }
+}
 
-  target {
-    arn      = aws_lambda_function.lambda_function.arn
-    role_arn = aws_iam_role.lambda_role.arn
+resource "aws_iam_role" "lambda_role_notif" {
+  name               = "c18-data-getter-notif-lambda-role"
+  assume_role_policy = data.aws_iam_policy_document.lambda_role_notif.json
+}
+
+
+
+resource "aws_lambda_function" "lambda_function_notif" {
+  function_name = "c18-trend-getter-notifications-function"
+  role          = aws_iam_role.lambda_role_notif.arn
+  package_type  = "Image"
+  image_uri     = "129033205317.dkr.ecr.eu-west-2.amazonaws.com/c18-trend-getter-notifications-ecr:latest"
+  memory_size   = 7168
+  timeout       = 300
+  architectures = ["x86_64"]
+
+  environment {
+    variables = {
+      DB_HOST     = var.DB_HOST
+      DB_PORT     = var.DB_PORT
+      DB_USER     = var.DB_USERNAME
+      DB_PASSWORD = var.DB_PASSWORD
+      DB_NAME     = var.DB_NAME
+      DB_SCHEMA   = var.DB_SCHEMA
+    }
   }
 }

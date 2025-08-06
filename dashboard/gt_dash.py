@@ -104,6 +104,13 @@ def gt_dashboard():
         list(timeframe_options.keys())
     )
     timeframe = timeframe_options[timeframe_label]
+    if "prev_timeframe" not in st.session_state:
+        st.session_state.prev_timeframe = timeframe
+
+    elif st.session_state.prev_timeframe != timeframe:
+        st.session_state.trend_df = pd.DataFrame(
+            data={'date': [], 'topic_name': [], 'hits': []})
+        st.session_state.prev_timeframe = timeframe
 
     with st.form("trend_form"):
         input_topic = display.topic_input()
