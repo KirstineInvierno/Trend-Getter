@@ -28,3 +28,8 @@ variable "DB_SCHEMA" {
   type        = string
   description = "The schema within the RDS database"
 }
+
+variable "AWS_DEFAULT_REGION" {
+  type        = string
+  sensitive   = true
+}
