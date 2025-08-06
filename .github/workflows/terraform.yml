@@ -28,6 +28,7 @@ jobs:
     TF_VAR_DB_HOST: ${{ secrets.TF_VAR_DB_HOST }}
     TF_VAR_DB_PORT: ${{ secrets.TF_VAR_DB_PORT }}
     TF_VAR_DB_NAME: ${{ secrets.TF_VAR_DB_NAME }}
+    TF_VAR_DB_SCHEMA: ${{ secrets.TF_VAR_DB_SCHEMA }}
    defaults:
      run:
        shell: bash
