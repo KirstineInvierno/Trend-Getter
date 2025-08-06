@@ -283,12 +283,14 @@ resource "aws_lambda_function" "lambda_function" {
 
   environment {
     variables = {
-      DB_HOST     = var.DB_HOST
-      DB_PORT     = var.DB_PORT
-      DB_USER     = var.DB_USERNAME
-      DB_PASSWORD = var.DB_PASSWORD
-      DB_NAME     = var.DB_NAME
-      DB_SCHEMA   = var.DB_SCHEMA
+      DB_HOST               = var.DB_HOST
+      DB_PORT               = var.DB_PORT
+      DB_USER               = var.DB_USERNAME
+      DB_PASSWORD           = var.DB_PASSWORD
+      DB_NAME               = var.DB_NAME
+      DB_SCHEMA             = var.DB_SCHEMA
+      AWS_ACCESS_KEY_ID     = var.AWS_ACCESS_KEY_ID
+      AWS_SECRET_ACCESS_KEY = var.AWS_SECRET_ACCESS_KEY
     }
   }
 }
