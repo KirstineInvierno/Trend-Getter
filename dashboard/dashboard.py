@@ -6,6 +6,7 @@ from insert_topic import TopicInserter, Connection
 from insert_email import EmailInserter
 from insert_topic import TopicInserter
 from insert_subscription import SubscriptionInserter
+from sentiment import sentiment_graph, sentiment_pie, sentiment_bar
 import gt_dash
 import pandas as pd
 import altair as alt
@@ -23,7 +24,7 @@ def load_mentions():
     connection = Connection()
     conn = connection.get_connection()
     query = """
-            SELECT mention_id,topic_name,timestamp,sentiment_label FROM bluesky.mention
+            SELECT mention_id,topic_name,timestamp,sentiment_label, sentiment_score FROM bluesky.mention
             join bluesky.topic using(topic_id);
         """
     try:
@@ -232,7 +233,7 @@ if __name__ == "__main__":
         """
     <style>
     .stApp {
-        background-color: #292b28;
+        background-color: #E1FAF9;
     }
     </style>
     """,
@@ -256,8 +257,10 @@ if __name__ == "__main__":
             topic_trends(df, topic_df)
             st.markdown("---")
             topic_trends_by_hour(df, topic_df)
-
-            # add sentiment graph here
+            st.markdown("---")
+            sentiment_bar(df)
+            st.markdown("---")
+            sentiment_graph(df, topic_df)
         with sub_tab:
             subscription()
         with unsub_tab:
