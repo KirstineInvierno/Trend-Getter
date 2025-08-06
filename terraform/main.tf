@@ -191,7 +191,7 @@ data "aws_iam_policy_document" "lambda_role" {
     actions = [
       "sts:AssumeRole",
       ## delete below
-       "lambda:InvokeFunction",
+      "lambda:InvokeFunction",
       ## full access (delete after):
       "cloudformation:DescribeStacks",
       "cloudformation:ListStackResources",
@@ -215,7 +215,7 @@ data "aws_iam_policy_document" "lambda_role" {
       "tag:GetResources",
       "xray:GetTraceSummaries",
       "xray:BatchGetTraces"
-      ]
+    ]
   }
 }
 
