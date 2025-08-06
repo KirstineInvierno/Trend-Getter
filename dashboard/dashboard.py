@@ -232,14 +232,14 @@ if __name__ == "__main__":
         """
     <style>
     .stApp {
-        background-color: #E1FAF9;
+        background-color: #292b28;
     }
     </style>
     """,
         unsafe_allow_html=True
     )
 
-    st.image("images/trendgetter_logo.png")
+    st.image("../images/trendgetter_transparrent.png")
     df = load_mentions()
     topic_df = load_topics()
 
@@ -256,6 +256,8 @@ if __name__ == "__main__":
             topic_trends(df, topic_df)
             st.markdown("---")
             topic_trends_by_hour(df, topic_df)
+
+            # add sentiment graph here
         with sub_tab:
             subscription()
         with unsub_tab:
