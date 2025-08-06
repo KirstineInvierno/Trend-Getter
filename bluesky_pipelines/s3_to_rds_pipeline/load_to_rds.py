@@ -22,11 +22,11 @@ class DBLoader():
 
     def get_sql_conn(self):
         """Returns connection to the RDS."""
-        host=environ["DB_HOST"]
-        user=environ["DB_USER"]
-        password=environ["DB_PASSWORD"]
-        database=environ["DB_NAME"]
-        engine=sqlalchemy.create_engine(
+        host = environ["DB_HOST"]
+        user = environ["DB_USER"]
+        password = environ["DB_PASSWORD"]
+        database = environ["DB_NAME"]
+        engine = sqlalchemy.create_engine(
             f"postgresql+psycopg2://{user}:{password}@{host}/{database}")
         return engine
 
