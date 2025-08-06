@@ -236,6 +236,13 @@ data "aws_iam_policy_document" "lambda_permissions" {
     ]
     resources = ["*"]
   }
+  statement {
+    effect = "Allow"
+    actions = [
+      "rds:*"
+    ]
+    resources = ["arn:aws:rds:eu-west-2:129033205317:db:c18trendgetterrds"]
+  }
 }
 
 resource "aws_iam_role" "lambda_role" {
