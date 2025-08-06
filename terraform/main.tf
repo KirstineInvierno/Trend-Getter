@@ -192,7 +192,7 @@ data "aws_iam_policy_document" "lambda_role" {
       "sts:AssumeRole",
       ## delete below
       "lambda:InvokeFunction",
-      ## full access (delete after):
+      ##### full access (delete after):
       "cloudformation:DescribeStacks",
       "cloudformation:ListStackResources",
       "cloudwatch:ListMetrics",
@@ -316,8 +316,8 @@ resource "aws_lambda_function" "lambda_function" {
       DB_PASSWORD           = var.DB_PASSWORD
       DB_NAME               = var.DB_NAME
       DB_SCHEMA             = var.DB_SCHEMA
-      AWS_ACCESS_KEY_ID     = var.TF_VAR_AWS_ACCESS_KEY_ID
-      AWS_SECRET_ACCESS_KEY = var.TF_VAR_AWS_SECRET_ACCESS_KEY
+      AWS_ACCESS_KEY_ID     = var.AWS_ACCESS_KEY_ID
+      AWS_SECRET_ACCESS_KEY = var.AWS_SECRET_ACCESS_KEY
     }
   }
 }
