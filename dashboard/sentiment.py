@@ -69,9 +69,13 @@ def sentiment_graph(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
             y2=0
         )
     ).encode(
-        x='timestamp',
-        y='smoothed_weighting',
-        color="topic_name"
+        x=alt.X('timestamp', title="Time"),
+        y=alt.Y('smoothed_weighting', title="Score"),
+        color=alt.Color("topic_name", title="Topic Name")
+    ).configure(
+        background='#EBF7F7'
+    ).properties(
+        title=f"Popularity Score Over time"
     )
 
     st.altair_chart(graph)
