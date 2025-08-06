@@ -23,9 +23,9 @@ def load_mentions():
     connection = Connection()
     conn = connection.get_connection()
     query = """
-            SELECT mention_id,topic_name,timestamp,sentiment_label FROM bluesky.mention
-            join bluesky.topic using(topic_id);
-        """
+           SELECT mention_id,topic_name,timestamp,sentiment_label FROM bluesky.mention
+           join bluesky.topic using(topic_id);
+       """
     try:
         with connection.get_connection() as conn:
             df = pd.read_sql(query, conn)
@@ -41,8 +41,8 @@ def load_topics():
     connection = Connection()
     conn = connection.get_connection()
     query = """
-            SELECT topic_name FROM  bluesky.topic;
-        """
+           SELECT topic_name FROM  bluesky.topic;
+       """
     try:
         with connection.get_connection() as conn:
             df = pd.read_sql(query, conn)
@@ -229,6 +229,10 @@ def topic_trends_by_hour(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
 
 
 def topic_sentiment_pie_chart(df: pd.DataFrame, topic_df: pd.DataFrame):
+    st.markdown("""
+        **View the sentiment of topic(s)**  
+           The sentiment of a topic is the public opinion towards a topic and is calculated using an AI model.
+        """)
     options = st.multiselect(
         "Select a topic to view the sentiment of its mentions.",
         topic_df["topic_name"].unique(),
@@ -244,13 +248,15 @@ def topic_sentiment_pie_chart(df: pd.DataFrame, topic_df: pd.DataFrame):
     topic_names = df["topic_name"].unique()
     title = ", ".join(topic_names)
     sentiment_df = df["sentiment_label"].value_counts().reset_index()
-    sentiment_df.columns = ["sentiment", "count"]
-    colours = alt.Scale(domain=["NEG", "POS", "NEU"],
-                        range=["#f54242", "#26f213", "#9a9e99"])
-    pie_chart = alt.Chart(sentiment_df).mark_arc().encode(
-        theta=alt.Theta("count:Q"),
-        color=alt.Color("sentiment:N", scale=colours),
-        tooltip=["sentiment", "count"]
+    sentiment_df.columns = ["sentiment of topic(s)", "mention count"]
+    sentiment_df["sentiment of topic(s)"] = sentiment_df["sentiment of topic(s)"].replace(
+        {"POS": "Positive", "NEG": "Negative", "NEU": "Neutral"})
+    colours = alt.Scale(domain=["Negative", "Positive", "Neutral"],
+                        range=["#bb3131", "#009e69", "#eeece1"])
+    pie_chart = alt.Chart(sentiment_df).mark_arc(stroke="black", strokeWidth=0.5).encode(
+        theta=alt.Theta("mention count:Q"),
+        color=alt.Color("sentiment of topic(s):N", scale=colours),
+        tooltip=["sentiment of topic(s)", "mention count"]
     ).configure(
         background='#EBF7F7'
     ).properties(title=f"Public sentiment for {title}")
@@ -260,12 +266,12 @@ def topic_sentiment_pie_chart(df: pd.DataFrame, topic_df: pd.DataFrame):
 if __name__ == "__main__":
     st.markdown(
         """
-    <style>
-    .stApp {
-        background-color: #E1FAF9;
-    }
-    </style>
-    """,
+   <style>
+   .stApp {
+       background-color: #E1FAF9;
+   }
+   </style>
+   """,
         unsafe_allow_html=True
     )
 
