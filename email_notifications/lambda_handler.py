@@ -20,6 +20,8 @@ def lambda_handler(event=None, context=None):
     subs = tchecker.check_all_thresholds(
         dgetter.subscriptions_dict, dgetter.mentions_df)
 
+    print(dgetter.mentions_df.info())
+
     sender = Sender()
 
     sender.send_all_emails(subs)
