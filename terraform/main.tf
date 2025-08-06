@@ -253,7 +253,7 @@ resource "aws_iam_role_policy_attachment" "lambda_s3_attach" {
   policy_arn = aws_iam_policy.lambda_s3_policy.arn
 }
 
-resource "aws_lambda_function" "lambda_function" {
+/*resource "aws_lambda_function" "lambda_function" {
   function_name = "c18-trend-getter-lambda-function"
   role          = aws_iam_role.lambda_role.arn
   package_type  = "Image"
@@ -272,8 +272,7 @@ resource "aws_lambda_function" "lambda_function" {
       DB_SCHEMA   = var.DB_SCHEMA
     }
   }
-}
-
+}*/
 
 ## Notifications lambda
 
@@ -344,8 +343,7 @@ resource "aws_lambda_function" "lambda_function_notif" {
   }
 }
 
-
-resource "aws_scheduler_schedule" "S3-to-RDS-ETL" {
+/*resource "aws_scheduler_schedule" "S3-to-RDS-ETL" {
   name = "c18-trend-getter-S3-to-RDS-ETL-eb"
 
   flexible_time_window {
@@ -358,4 +356,4 @@ resource "aws_scheduler_schedule" "S3-to-RDS-ETL" {
     arn      = aws_lambda_function.lambda_function.arn
     role_arn = aws_iam_role.lambda_role.arn
   }
-}
+}*/
