@@ -38,15 +38,9 @@ class Sender():
 
     def get_ses_client(self):
         """Returns a ses client to use to send emails"""
-        region = environ["AWS_DEFAULT_REGION"]
-        access_key = environ["AWS_ACCESS_KEY_ID"]
-        secret_key = environ['AWS_SECRET_ACCESS_KEY']
 
         ses_client = boto3.client(
-            "ses",
-            region_name=region,
-            aws_access_key_id=access_key,
-            aws_secret_access_key=secret_key,
+            "ses"
         )
 
         return ses_client
