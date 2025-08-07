@@ -7,7 +7,6 @@ import sqlalchemy
 
 
 class DataGetter():
-
     """Class which interacts with db"""
 
     def __init__(self):
