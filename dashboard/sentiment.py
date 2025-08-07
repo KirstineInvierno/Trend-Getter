@@ -97,31 +97,3 @@ def sentiment_graph(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
     )
 
     st.altair_chart(graph)
-
-
-def sentiment_pie(mentions_df: pd.DataFrame) -> None:
-    sentiment_dict = {
-        "NEG": "Negative",
-        "NEU": "Neutral",
-        "POS": "Positive"
-    }
-
-    colours = ["#a83232", "#575c60", "#32a852"]
-
-    source = mentions_df.groupby("sentiment_label").count().reset_index()
-    source["Sentiment"] = source["sentiment_label"].map(
-        lambda label: sentiment_dict[label])
-    print(source.info())
-
-    pie = alt.Chart(source).mark_arc().encode(
-        theta="mention_id",
-        color="Sentiment"
-    ).configure(
-        background='#EBF7F7'
-    ).properties(
-        title=f"Sentiment pie"
-    ).configure_range(
-        category=alt.RangeScheme(colours)
-    )
-
-    st.altair_chart(pie)

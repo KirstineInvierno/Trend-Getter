@@ -6,7 +6,7 @@ from insert_topic import TopicInserter, Connection
 from insert_email import EmailInserter
 from insert_topic import TopicInserter
 from insert_subscription import SubscriptionInserter
-from sentiment import sentiment_graph, sentiment_pie, sentiment_bar
+from sentiment import sentiment_graph, sentiment_bar
 import gt_dash
 import pandas as pd
 import altair as alt
