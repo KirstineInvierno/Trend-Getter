@@ -13,7 +13,7 @@ class Sender():
     """Class which sends emails"""
 
     def __init__(self):
-        """Initializes instances with ses client"""
+        """Initialises instances with ses client"""
         self.ses_client = self.get_ses_client()
 
     def create_email_from_dict(self, subscription_dict: dict) -> str:
