@@ -120,6 +120,10 @@ resource "aws_ecr_repository" "trend-getter-lambda-ecr" {
   image_tag_mutability = "MUTABLE"
 }
 
+resource "aws_ecr_repository" "c18-trend-getter-notifications-ecr" {
+  name                 = "c18-trend-getter-notifications-ecr"
+  image_tag_mutability = "MUTABLE"
+}
 
 # EC2
 
@@ -185,10 +189,37 @@ data "aws_iam_policy_document" "lambda_role" {
 
     principals {
       type        = "Service"
-      identifiers = ["lambda.amazonaws.com"]
+      identifiers = ["lambda.amazonaws.com", "scheduler.amazonaws.com"]
     }
 
-    actions = ["sts:AssumeRole"]
+    actions = [
+      "sts:AssumeRole",
+      ## delete below
+      "lambda:InvokeFunction",
+      ##### full access (delete after):
+      "cloudformation:DescribeStacks",
+      "cloudformation:ListStackResources",
+      "cloudwatch:ListMetrics",
+      "cloudwatch:GetMetricData",
+      "ec2:DescribeSecurityGroups",
+      "ec2:DescribeSubnets",
+      "ec2:DescribeVpcs",
+      "kms:ListAliases",
+      "iam:GetPolicy",
+      "iam:GetPolicyVersion",
+      "iam:GetRole",
+      "iam:GetRolePolicy",
+      "iam:ListAttachedRolePolicies",
+      "iam:ListRolePolicies",
+      "iam:ListRoles",
+      "lambda:*",
+      "logs:DescribeLogGroups",
+      "states:DescribeStateMachine",
+      "states:ListStateMachines",
+      "tag:GetResources",
+      "xray:GetTraceSummaries",
+      "xray:BatchGetTraces"
+    ]
   }
 }
 
@@ -216,6 +247,52 @@ data "aws_iam_policy_document" "lambda_permissions" {
       "arn:aws:ses:eu-west-2:129033205317:identity/trendgetterupdates@gmail.com"
     ]
   }
+  statement {
+    effect = "Allow"
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents"
+    ]
+    resources = ["arn:aws:logs:*:*:*"]
+  }
+  statement {
+    effect = "Allow"
+    actions = [
+      "lambda:InvokeFunction",
+      ## full access (delete after):
+      "cloudformation:DescribeStacks",
+      "cloudformation:ListStackResources",
+      "cloudwatch:ListMetrics",
+      "cloudwatch:GetMetricData",
+      "ec2:DescribeSecurityGroups",
+      "ec2:DescribeSubnets",
+      "ec2:DescribeVpcs",
+      "kms:ListAliases",
+      "iam:GetPolicy",
+      "iam:GetPolicyVersion",
+      "iam:GetRole",
+      "iam:GetRolePolicy",
+      "iam:ListAttachedRolePolicies",
+      "iam:ListRolePolicies",
+      "iam:ListRoles",
+      "lambda:*",
+      "logs:DescribeLogGroups",
+      "states:DescribeStateMachine",
+      "states:ListStateMachines",
+      "tag:GetResources",
+      "xray:GetTraceSummaries",
+      "xray:BatchGetTraces"
+    ]
+    resources = ["*"]
+  }
+  statement {
+    effect = "Allow"
+    actions = [
+      "rds:*"
+    ]
+    resources = ["arn:aws:rds:eu-west-2:129033205317:db:c18trendgetterrds"]
+  }
 }
 
 resource "aws_iam_role" "lambda_role" {
@@ -233,13 +310,21 @@ resource "aws_iam_role_policy_attachment" "lambda_s3_attach" {
   policy_arn = aws_iam_policy.lambda_s3_policy.arn
 }
 
+resource "aws_lambda_permission" "allow_lambda" {
+  statement_id  = "AllowExecutionFromETLLambda"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_function_notif.function_name
+  principal     = "lambda.amazonaws.com"
+  source_arn    = aws_lambda_function.lambda_function.arn
+}
+
 resource "aws_lambda_function" "lambda_function" {
   function_name = "c18-trend-getter-lambda-function"
   role          = aws_iam_role.lambda_role.arn
   package_type  = "Image"
   image_uri     = "129033205317.dkr.ecr.eu-west-2.amazonaws.com/trend-getter-lambda-ecr:latest"
-  memory_size   = 7168
-  timeout       = 300
+  memory_size   = 10000
+  timeout       = 600
   architectures = ["x86_64"]
 
   environment {
@@ -250,6 +335,95 @@ resource "aws_lambda_function" "lambda_function" {
       DB_PASSWORD = var.DB_PASSWORD
       DB_NAME     = var.DB_NAME
       DB_SCHEMA   = var.DB_SCHEMA
+      HF_HOME     = "/tmp/hf/"
     }
   }
+}
+
+## Notifications lambda
+
+data "aws_iam_policy_document" "lambda_role_notif" {
+  statement {
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+data "aws_iam_policy_document" "lambda_permissions_notif" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "s3:ListBucket",
+      "s3:GetObject",
+      "s3:PutObject",
+      "s3:DeleteObject"
+    ]
+    resources = [
+      "arn:aws:s3:::c18-trend-getter-s3",
+      "arn:aws:s3:::c18-trend-getter-s3/*"
+    ]
+  }
+  statement {
+    effect = "Allow"
+    actions = [
+      "ses:*"
+    ]
+    resources = [
+      "*"
+    ]
+  }
+}
+
+resource "aws_iam_role" "lambda_role_notif" {
+  name               = "c18-data-getter-notif-lambda-role"
+  assume_role_policy = data.aws_iam_policy_document.lambda_role_notif.json
+}
+
+
+
+resource "aws_lambda_function" "lambda_function_notif" {
+  function_name = "c18-trend-getter-notifications-function"
+  role          = aws_iam_role.lambda_role_notif.arn
+  package_type  = "Image"
+  image_uri     = "129033205317.dkr.ecr.eu-west-2.amazonaws.com/c18-trend-getter-notifications-ecr:v4"
+  memory_size   = 7168
+  timeout       = 300
+  architectures = ["x86_64"]
+
+  environment {
+    variables = {
+      DB_HOST      = var.DB_HOST
+      DB_PORT      = var.DB_PORT
+      DB_USER      = var.DB_USERNAME
+      DB_PASSWORD  = var.DB_PASSWORD
+      DB_NAME      = var.DB_NAME
+      DB_SCHEMA    = var.DB_SCHEMA
+      SENDER_EMAIL = "trendgetterupdates@gmail.com"
+    }
+  }
+}
+
+resource "aws_lambda_permission" "allow_s3" {
+  statement_id  = "AllowExecutionFromS3"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_function.function_name
+  principal     = "s3.amazonaws.com"
+  source_arn    = aws_s3_bucket.c18-trend-getter-s3.arn
+}
+
+resource "aws_s3_bucket_notification" "s3_trigger" {
+  bucket = aws_s3_bucket.c18-trend-getter-s3.id
+
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.lambda_function.arn
+    events              = ["s3:ObjectCreated:*"]
+  }
+
+  depends_on = [aws_lambda_permission.allow_s3]
 }
