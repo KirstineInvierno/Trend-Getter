@@ -318,3 +318,7 @@ if __name__ == "__main__":
 
     with tab2:
         gt_dash.gt_dashboard()
+
+if "initial_rerun_done" not in st.session_state:
+    st.session_state.initial_rerun_done = True
+    st.rerun()
