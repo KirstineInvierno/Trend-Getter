@@ -260,6 +260,14 @@ resource "aws_iam_role_policy_attachment" "lambda_s3_attach" {
   policy_arn = aws_iam_policy.lambda_s3_policy.arn
 }
 
+resource "aws_lambda_permission" "allow_bucket" {
+  statement_id  = "AllowExecutionFromS3Bucket"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_function.function_name
+  principal     = "s3.amazonaws.com"
+  source_arn    = aws_s3_bucket.c18-trend-getter-s3.arn
+}
+
 resource "aws_lambda_function" "lambda_function" {
   function_name = "c18-trend-getter-lambda-function"
   role          = aws_iam_role.lambda_role.arn
@@ -349,4 +357,12 @@ resource "aws_lambda_function" "lambda_function_notif" {
       SENDER_EMAIL = "trendgetterupdates@gmail.com"
     }
   }
+}
+
+resource "aws_lambda_permission" "allow_lambda" {
+  statement_id  = "AllowExecutionFromLambda"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lambda_function_notif.function_name
+  principal     = "s3.amazonaws.com"
+  source_arn    = aws_lambda_function.lambda_function.arn
 }
