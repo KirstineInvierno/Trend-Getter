@@ -23,8 +23,9 @@ def sentiment_mentions(df: pd.DataFrame, group: bool = True) -> pd.DataFrame:
 def sentiment_bar(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
 
     options = st.multiselect(
-        "Select a topic to view the popularity score of that topic per day",
+        "Select a topic to view the total popularity score of a topic",
         topic_df["topic_name"].unique(),
+        default="technology",
         key=8
     )
     if not options:
@@ -40,7 +41,8 @@ def sentiment_bar(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
 
     bar = alt.Chart(source).mark_bar().encode(
         x=alt.X('topic_name', title="Topic Name"),
-        y=alt.Y('weighting', title="Score")
+        y=alt.Y('weighting', title="Score"),
+        color=alt.Color("topic_name", title="Topic Name")
     ).configure(
         background='#EBF7F7'
     ).properties(
@@ -53,7 +55,8 @@ def sentiment_bar(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
 def sentiment_graph(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
     options = st.multiselect(
         "Select a topic to view the popularity score of that topic per day",
-        topic_df["topic_name"].unique()
+        topic_df["topic_name"].unique(),
+        default="technology",
     )
     if not options:
         st.info("Please select a topic")

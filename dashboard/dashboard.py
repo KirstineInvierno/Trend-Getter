@@ -175,7 +175,7 @@ def topic_trends(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
     options = st.multiselect(
         "Select a topic to view the number of mentions of that topic per day",
         topic_df["topic_name"].unique(),
-        default="art",
+        default="technology",
         key=5
     )
     if not options:
@@ -209,7 +209,7 @@ def topic_trends_by_hour(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
     options = st.multiselect(
         "Select a topic to view the number of mentions of that topic by hour on a selected day",
         topic_df["topic_name"].unique(),
-        default="art",
+        default="technology",
         key=6,
     )
 
