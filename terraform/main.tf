@@ -406,3 +406,140 @@ resource "aws_s3_bucket_notification" "s3_trigger" {
   depends_on = [aws_lambda_permission.allow_s3]
 }
 # updated
+
+resource "aws_iam_role" "step_function_role" {
+  name = "step-function-execution-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = "sts:AssumeRole",
+        Effect = "Allow",
+        Principal = {
+          Service = "states.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_policy" "step_function_policy" {
+  name = "step-function-lambda-invoke-policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "lambda:InvokeFunction"
+        ],
+        Resource = ["*"]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "step_function_attach_policy" {
+  role       = aws_iam_role.step_function_role.name
+  policy_arn = aws_iam_policy.step_function_policy.arn
+}
+
+
+
+
+resource "aws_sfn_state_machine" "etl_sm" {
+  name = "c18-trendgetter-etl-notif-sm"
+  role_arn = aws_iam_role.step_function_role.arn
+  definition = jsonencode({
+  "Comment" = "A state machine invoking our two lambdas",
+  "StartAt" = "InvokeETLLambda",
+  "States" = {
+    "InvokeETLLambda" = {
+      "Type" = "Task",
+      "Resource" = "${aws_lambda_function.lambda_function.arn}",
+      "Next" = "InvokeNotificationLambda"
+    },
+    "InvokeNotificationLambda" = {
+      "Type" = "Task",
+      "Resource" = "${aws_lambda_function.lambda_function_notif.arn}",
+      "End" = true
+    }
+  }
+})
+}
+## State machine trigger
+
+resource "aws_s3_bucket" "trigger_bucket" {
+  bucket = "my-trigger-bucket-name"
+}
+
+resource "aws_s3_bucket_notification" "s3_eventbridge" {
+  bucket = aws_s3_bucket.c18-trend-getter-s3.id
+
+  eventbridge = true
+}
+
+
+
+resource "aws_iam_role" "eventbridge_invoke_stepfunction_role" {
+  name = "c18-tg-event-sm-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement: [{
+      Effect = "Allow",
+      Principal = {
+        Service = "events.amazonaws.com"
+      },
+      Action = "sts:AssumeRole"
+    }]
+  })
+}
+
+resource "aws_iam_policy" "eventbridge_invoke_stepfunction_policy" {
+  name = "c18-tg-event-policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement: [
+      {
+        Effect = "Allow",
+        Action = "states:StartExecution",
+        Resource = aws_sfn_state_machine.etl_sm.arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "attach_eventbridge_invoke_stepfunction" {
+  role       = aws_iam_role.eventbridge_invoke_stepfunction_role.name
+  policy_arn = aws_iam_policy.eventbridge_invoke_stepfunction_policy.arn
+}
+
+
+
+resource "aws_cloudwatch_event_rule" "s3_put_event" {
+  name        = "trigger-stepfunction-on-upload"
+  description = "Triggers step function on S3 object creation"
+  event_pattern = jsonencode({
+    source = ["aws.s3"],
+    "detail-type" = ["Object Created"],
+    detail = {
+      bucket = {
+        name = [aws_s3_bucket.trigger_bucket.bucket]
+      }
+    }
+  })
+}
+
+resource "aws_cloudwatch_event_target" "trigger_stepfunction" {
+  rule      = aws_cloudwatch_event_rule.s3_put_event.name
+  arn       = aws_sfn_state_machine.etl_sm.arn
+  role_arn  = aws_iam_role.eventbridge_invoke_stepfunction_role.arn
+}
+
+
+
+
