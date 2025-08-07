@@ -265,8 +265,8 @@ resource "aws_lambda_function" "lambda_function" {
   role          = aws_iam_role.lambda_role.arn
   package_type  = "Image"
   image_uri     = "129033205317.dkr.ecr.eu-west-2.amazonaws.com/trend-getter-lambda-ecr:latest"
-  memory_size   = 7168
-  timeout       = 300
+  memory_size   = 10000
+  timeout       = 600
   architectures = ["x86_64"]
 
   environment {
@@ -277,6 +277,7 @@ resource "aws_lambda_function" "lambda_function" {
       DB_PASSWORD = var.DB_PASSWORD
       DB_NAME     = var.DB_NAME
       DB_SCHEMA   = var.DB_SCHEMA
+      HF_HOME     = "/tmp/hf/"
     }
   }
 }
@@ -340,12 +341,13 @@ resource "aws_lambda_function" "lambda_function_notif" {
 
   environment {
     variables = {
-      DB_HOST     = var.DB_HOST
-      DB_PORT     = var.DB_PORT
-      DB_USER     = var.DB_USERNAME
-      DB_PASSWORD = var.DB_PASSWORD
-      DB_NAME     = var.DB_NAME
-      DB_SCHEMA   = var.DB_SCHEMA
+      DB_HOST      = var.DB_HOST
+      DB_PORT      = var.DB_PORT
+      DB_USER      = var.DB_USERNAME
+      DB_PASSWORD  = var.DB_PASSWORD
+      DB_NAME      = var.DB_NAME
+      DB_SCHEMA    = var.DB_SCHEMA
+      SENDER_EMAIL = "trendgetterupdates@gmail.com"
     }
   }
 }
