@@ -263,7 +263,7 @@ resource "aws_iam_role_policy_attachment" "lambda_s3_attach" {
 resource "aws_lambda_permission" "allow_bucket" {
   statement_id  = "AllowExecutionFromS3Bucket"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.c18-trend-getter-lambda-function
+  function_name = c18-trend-getter-lambda-function
   principal     = "s3.amazonaws.com"
   source_arn    = aws_s3_bucket.c18-trend-getter-s3.arn
 }
@@ -362,7 +362,7 @@ resource "aws_lambda_function" "lambda_function_notif" {
 resource "aws_lambda_permission" "allow_lambda" {
   statement_id  = "AllowExecutionFromLambda"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.c18-trend-getter-notifications-function
+  function_name = c18-trend-getter-notifications-function
   principal     = "s3.amazonaws.com"
   source_arn    = aws_lambda_function.lambda_function.arn
 }
