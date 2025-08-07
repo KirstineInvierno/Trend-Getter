@@ -362,7 +362,7 @@ resource "aws_lambda_function" "lambda_function_notif" {
 resource "aws_lambda_permission" "allow_lambda" {
   statement_id  = "AllowExecutionFromLambda"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.lambda_function_notif.arn
+  function_name = aws_lambda_function.lambda_function_notif.function_name
   principal     = "s3.amazonaws.com"
   source_arn    = aws_lambda_function.lambda_function.arn
 }
