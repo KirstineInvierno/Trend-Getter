@@ -1,4 +1,4 @@
-'''Script to obtain data from RDS to check whether users need to be notified.'''
+"""Script to obtain data from RDS to check whether users need to be notified."""
 from os import environ
 from datetime import datetime, timedelta
 import pandas as pd
@@ -11,7 +11,7 @@ class DataGetter():
     """Class which interacts with db"""
 
     def __init__(self):
-        """Initializes DataGetter"""
+        """Initialises DataGetter"""
         load_dotenv()
         self.sql_conn = self.get_sql_conn()
         self.subscriptions_dict = self.get_subscriptions_data()
