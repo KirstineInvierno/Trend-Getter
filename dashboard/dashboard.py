@@ -186,6 +186,8 @@ def topic_trends(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
     df['timestamp'] = pd.to_datetime(
         df['timestamp'])
 
+    df['topic_name'] = df['topic_name'].str.capitalize()
+
     df = df.groupby([pd.Grouper(key='timestamp', freq='D'),
                     "topic_name"]).size().reset_index(name='mentions')
 
@@ -198,7 +200,7 @@ def topic_trends(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
         color=alt.Color('topic_name:N', title="Topic"),
         tooltip=["timestamp", "mentions", "topic_name"]).configure(
         background='#EBF7F7'
-    ).properties(title='Mentions by topic per day')
+    ).properties(title=alt.Title(text='Mentions by topic per day', anchor='middle'))
 
     st.altair_chart(line_chart)
 
@@ -235,6 +237,8 @@ def topic_trends_by_hour(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
         st.info(f"No mentions for the selected topic(s) on {selected_date}")
         return
 
+    df['topic_name'] = df['topic_name'].str.capitalize()
+
     chart = alt.Chart(df).mark_line(point=True).encode(
         x=alt.X("hour:Q", axis=alt.Axis(title="Hour of Day")),
         y=alt.Y("mentions:Q", axis=alt.Axis(title="Mentions")),
@@ -242,7 +246,7 @@ def topic_trends_by_hour(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
         tooltip=["hour", "mentions", "topic_name"]
     ).configure(
         background='#EBF7F7'
-    ).properties(title=f"Hourly Mentions on {selected_date}")
+    ).properties(title=alt.Title(text=f"Hourly Mentions on {selected_date}", anchor='middle'))
 
     st.altair_chart(chart, use_container_width=True)
 
@@ -255,7 +259,7 @@ def topic_sentiment_pie_chart(df: pd.DataFrame, topic_df: pd.DataFrame):
     options = st.multiselect(
         "Select a topic to view the sentiment of its mentions.",
         topic_df["topic_name"].unique(),
-        default=None,
+        default="artificial intelligence",
         key=7,
     )
 
@@ -278,7 +282,8 @@ def topic_sentiment_pie_chart(df: pd.DataFrame, topic_df: pd.DataFrame):
         tooltip=["sentiment of topic(s)", "mention count"]
     ).configure(
         background='#EBF7F7'
-    ).properties(title=f"Public sentiment for {title}")
+    ).properties(title=alt.Title(text=f"Public sentiment for {title}", anchor='middle'))
+    title = alt.Title(text="Popularity Score Over time", anchor='middle')
     st.altair_chart(pie_chart, use_container_width=True)
 
 

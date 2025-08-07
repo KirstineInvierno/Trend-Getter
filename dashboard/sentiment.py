@@ -25,7 +25,8 @@ def sentiment_bar(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
     options = st.multiselect(
         "Select a topic to view the total popularity score of a topic",
         topic_df["topic_name"].unique(),
-        default="technology",
+        default=["technology", "machine learning",
+                 "artificial intelligence", "cybersecurity"],
         key=8
     )
     if not options:
@@ -37,22 +38,29 @@ def sentiment_bar(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
         st.info(f"No mentions for the selected topic(s)")
         return
 
+    df['topic_name'] = df['topic_name'].str.capitalize()
+
     source = sentiment_mentions(df)
 
     bar = alt.Chart(source).mark_bar().encode(
-        x=alt.X('topic_name', title="Topic Name"),
+        x=alt.X('topic_name', title="Topic Name",
+                axis=alt.Axis(labelAngle=-45)),
         y=alt.Y('weighting', title="Score"),
         color=alt.Color("topic_name", title="Topic Name")
     ).configure(
         background='#EBF7F7'
     ).properties(
-        title=f"Popularity Scores"
+        title=alt.Title(text="Popularity Scores", anchor='middle')
     )
 
     st.altair_chart(bar)
 
 
 def sentiment_graph(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
+    st.markdown("""
+        **What does 'Popularity score' mean?**  
+        Popularity score = number of positive mentions - number of negative mentions
+        """)
     options = st.multiselect(
         "Select a topic to view the popularity score of that topic per day",
         topic_df["topic_name"].unique(),
@@ -71,6 +79,7 @@ def sentiment_graph(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
         df['timestamp'])
 
     df = sentiment_mentions(df, False)
+    df['topic_name'] = df['topic_name'].str.capitalize()
 
     df = df.groupby([pd.Grouper(key='timestamp', freq='h'),
                     "topic_name"]).sum("weighting").reset_index()
@@ -96,7 +105,7 @@ def sentiment_graph(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
     ).configure(
         background='#EBF7F7'
     ).properties(
-        title=f"Popularity Score Over time"
+        title=alt.Title(text="Popularity Score Over time", anchor='middle')
     )
 
     st.altair_chart(graph)
