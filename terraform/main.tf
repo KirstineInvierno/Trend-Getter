@@ -523,9 +523,7 @@ resource "aws_cloudwatch_event_rule" "s3_put_event" {
     source        = ["aws.s3"],
     "detail-type" = ["Object Created"],
     detail = {
-      bucket = {
-        name = "c18-trend-getter-s3"
-      }
+      bucket = aws_s3_bucket.c18-trend-getter-s3.id
     }
   })
 }
