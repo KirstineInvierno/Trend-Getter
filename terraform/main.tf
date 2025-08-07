@@ -197,34 +197,7 @@ data "aws_iam_policy_document" "lambda_role" {
       identifiers = ["lambda.amazonaws.com", "scheduler.amazonaws.com"]
     }
 
-    actions = [
-      "sts:AssumeRole",
-      ## delete below
-      "lambda:InvokeFunction",
-      ##### full access (delete after):
-      "cloudformation:DescribeStacks",
-      "cloudformation:ListStackResources",
-      "cloudwatch:ListMetrics",
-      "cloudwatch:GetMetricData",
-      "ec2:DescribeSecurityGroups",
-      "ec2:DescribeSubnets",
-      "ec2:DescribeVpcs",
-      "kms:ListAliases",
-      "iam:GetPolicy",
-      "iam:GetPolicyVersion",
-      "iam:GetRole",
-      "iam:GetRolePolicy",
-      "iam:ListAttachedRolePolicies",
-      "iam:ListRolePolicies",
-      "iam:ListRoles",
-      "lambda:*",
-      "logs:DescribeLogGroups",
-      "states:DescribeStateMachine",
-      "states:ListStateMachines",
-      "tag:GetResources",
-      "xray:GetTraceSummaries",
-      "xray:BatchGetTraces"
-    ]
+    actions = ["sts:AssumeRole"]
   }
 }
 
