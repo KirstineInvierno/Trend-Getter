@@ -125,6 +125,11 @@ resource "aws_ecr_repository" "c18-trend-getter-notifications-ecr" {
   image_tag_mutability = "MUTABLE"
 }
 
+resource "aws_ecr_repository" "c18-trend-getter-dashboard-ecr" {
+  name                 = "c18-trend-getter-dashboard-ecr"
+  image_tag_mutability = "MUTABLE"
+}
+
 # EC2
 
 resource "tls_private_key" "trend-getter-key" {
@@ -192,34 +197,7 @@ data "aws_iam_policy_document" "lambda_role" {
       identifiers = ["lambda.amazonaws.com", "scheduler.amazonaws.com"]
     }
 
-    actions = [
-      "sts:AssumeRole",
-      ## delete below
-      "lambda:InvokeFunction",
-      ##### full access (delete after):
-      "cloudformation:DescribeStacks",
-      "cloudformation:ListStackResources",
-      "cloudwatch:ListMetrics",
-      "cloudwatch:GetMetricData",
-      "ec2:DescribeSecurityGroups",
-      "ec2:DescribeSubnets",
-      "ec2:DescribeVpcs",
-      "kms:ListAliases",
-      "iam:GetPolicy",
-      "iam:GetPolicyVersion",
-      "iam:GetRole",
-      "iam:GetRolePolicy",
-      "iam:ListAttachedRolePolicies",
-      "iam:ListRolePolicies",
-      "iam:ListRoles",
-      "lambda:*",
-      "logs:DescribeLogGroups",
-      "states:DescribeStateMachine",
-      "states:ListStateMachines",
-      "tag:GetResources",
-      "xray:GetTraceSummaries",
-      "xray:BatchGetTraces"
-    ]
+    actions = ["sts:AssumeRole"]
   }
 }
 
@@ -427,3 +405,4 @@ resource "aws_s3_bucket_notification" "s3_trigger" {
 
   depends_on = [aws_lambda_permission.allow_s3]
 }
+# updated
