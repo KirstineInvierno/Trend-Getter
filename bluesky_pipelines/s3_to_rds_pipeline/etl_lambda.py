@@ -1,10 +1,10 @@
-# pylint: disable=W0613
 """Script to run the ETL, automatically updating the RDS."""
+# pylint: disable=W0613
 
 import logging
 from extract_from_s3 import S3Connection, DatabaseTopicExtractor, S3FileExtractor, Converter, BUCKET
 from transform import MessageTransformer
-from load import DBLoader
+from load_to_rds import DBLoader
 
 logging.basicConfig(format="%(levelname)s | %(asctime)s | %(message)s", level=logging.INFO)
 

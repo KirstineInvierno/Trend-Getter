@@ -6,6 +6,8 @@ from extract_from_s3 import S3Connection, DatabaseTopicExtractor, S3FileExtracto
 
 
 class TestS3Connection:
+    """Tests checking S3Connection class."""
+
     @patch("boto3.client")
     def test_success_logs_and_returns_client(self, mock_boto_client, caplog):
         """Test that S3Connection is successful and logs the correct message."""
@@ -31,6 +33,8 @@ class TestS3Connection:
 
 
 class TestDatabaseTopicExtractor:
+    """Tests checking DatabaseTopicExtractor class."""
+
     def test_get_topics_dict_from_rds_success(self, caplog, test_data):
         """Test successful retrieval of topics from RDS and correct log messages."""
         caplog.set_level("INFO")
@@ -62,6 +66,8 @@ class TestDatabaseTopicExtractor:
 
 
 class TestS3FileExtractor:
+    """Tests checking S3FileExtractor class."""
+
     def test_get_latest_file_key(self, fake_s3_client):
         """Test that the latest file key is correctly identified by S3FileExtractor."""
         extractor = S3FileExtractor(fake_s3_client)
@@ -78,6 +84,8 @@ class TestS3FileExtractor:
 
 
 class TestConverter:
+    """Tests checking Converter class."""
+
     def test_get_latest_file_as_dicts(self, fake_s3_client, caplog):
         """Test that the Converter retrieves and converts the latest file content to a list of dicts."""
         caplog.set_level("INFO")
@@ -91,6 +99,8 @@ class TestConverter:
 
 
 class TestTransformer:
+    """Tests checking Transformer class."""
+
     def test_transform_messages_into_dataframe(self, fake_dataframe, sample_message):
         """Test that the transformer converts a message into a DataFrame."""
         mock_transformer = MagicMock()
