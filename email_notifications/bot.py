@@ -25,3 +25,13 @@ class BlueskyPoster:
         for topic in dg.topics_dict.keys():
             text = f"There have been {dg.topics_dict[topic]} mentions of {topic} in the last 10 minutes."
             self.post(text=text)
+
+
+def lambda_handler(event, context):
+    bot = BlueskyPoster()
+    bot.post_updates()
+
+    return {
+        'statusCode': 200,
+        'body': 'Success'
+    }
