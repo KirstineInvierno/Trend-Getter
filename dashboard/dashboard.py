@@ -27,7 +27,7 @@ def load_mentions():
             SELECT mention_id,topic_name,timestamp,sentiment_label, sentiment_score FROM bluesky.mention
             join bluesky.topic using(topic_id);
         """
-    
+
     try:
         with connection.get_connection() as conn:
             df = pd.read_sql(query, conn)
@@ -317,7 +317,7 @@ if __name__ == "__main__":
             sentiment_graph(df, topic_df)
             st.markdown("---")
             sentiment_bar(df)
-            
+
         with sub_tab:
             subscription()
         with unsub_tab:

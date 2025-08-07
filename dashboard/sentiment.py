@@ -11,8 +11,6 @@ def sentiment_mentions(df: pd.DataFrame, group: bool = True) -> pd.DataFrame:
         "POS": 1
     }
 
-    print(df)
-
     df["weighting"] = df["sentiment_label"].map(
         lambda label: weightings[label])
 
@@ -38,7 +36,6 @@ def sentiment_bar(mentions_df: pd.DataFrame) -> None:
 
 
 def sentiment_graph(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
-
     options = st.multiselect(
         "Select a topic to view the popularity score of that topic per day",
         topic_df["topic_name"].unique()
@@ -46,22 +43,23 @@ def sentiment_graph(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
     if not options:
         st.info("Please select a topic")
         return
-
     df = df[df["topic_name"].isin(options)]
-    df['timestamp'] = pd.to_datetime(
-        df['timestamp'])
-    df = df.groupby([pd.Grouper(key='timestamp', freq='h'),
-                    "topic_name"]).sum("weighting").reset_index()
 
     if df.empty:
         st.info(f"No mentions for the selected topic(s)")
+        return
+
+    df['timestamp'] = pd.to_datetime(
+        df['timestamp'])
 
     df = sentiment_mentions(df, False)
+
+    df = df.groupby([pd.Grouper(key='timestamp', freq='h'),
+                    "topic_name"]).sum("weighting").reset_index()
 
     df['smoothed_weighting'] = ndimage.gaussian_filter1d(
         df['weighting'], sigma=1.0)
 
-    print(df)
     graph = alt.Chart(df).mark_line().mark_area(
         line={'color': 'darkgreen'},
         color=alt.Gradient(
