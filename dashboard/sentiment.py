@@ -20,8 +20,23 @@ def sentiment_mentions(df: pd.DataFrame, group: bool = True) -> pd.DataFrame:
     return df
 
 
-def sentiment_bar(mentions_df: pd.DataFrame) -> None:
-    source = sentiment_mentions(mentions_df)
+def sentiment_bar(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
+
+    options = st.multiselect(
+        "Select a topic to view the popularity score of that topic per day",
+        topic_df["topic_name"].unique(),
+        key=8
+    )
+    if not options:
+        st.info("Please select a topic")
+        return
+    df = df[df["topic_name"].isin(options)]
+
+    if df.empty:
+        st.info(f"No mentions for the selected topic(s)")
+        return
+
+    source = sentiment_mentions(df)
 
     bar = alt.Chart(source).mark_bar().encode(
         x=alt.X('topic_name', title="Topic Name"),

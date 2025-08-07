@@ -283,6 +283,7 @@ def topic_sentiment_pie_chart(df: pd.DataFrame, topic_df: pd.DataFrame):
 
 
 if __name__ == "__main__":
+    st.set_page_config(layout="wide")
     st.markdown(
         """
    <style>
@@ -294,7 +295,18 @@ if __name__ == "__main__":
         unsafe_allow_html=True
     )
 
-    st.image("../images/trendgetter_transparrent.png")
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.write(' ')
+
+    with col2:
+        st.image("../images/trendgetter_transparrent.png",
+                 width=600, use_container_width=False)
+
+    with col3:
+        st.write(' ')
+
     df = load_mentions()
     topic_df = load_topics()
 
@@ -308,15 +320,16 @@ if __name__ == "__main__":
         dash_tab, sub_tab, unsub_tab = st.tabs(
             ["Dashboard", "Subscribe", "Unsubscribe"])
         with dash_tab:
-            topic_trends(df, topic_df)
-            st.markdown("---")
-            topic_trends_by_hour(df, topic_df)
-            st.markdown("---")
-            topic_sentiment_pie_chart(df, topic_df)
-            st.markdown("---")
-            sentiment_graph(df, topic_df)
-            st.markdown("---")
-            sentiment_bar(df)
+            col1, col2 = st.columns(2)
+            with col1:
+                topic_trends(df, topic_df)
+                st.markdown("---")
+                topic_trends_by_hour(df, topic_df)
+            with col2:
+                topic_sentiment_pie_chart(df, topic_df)
+                sentiment_graph(df, topic_df)
+                st.markdown("---")
+                sentiment_bar(df, topic_df)
 
         with sub_tab:
             subscription()
