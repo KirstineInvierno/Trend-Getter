@@ -120,8 +120,12 @@ class MessageTransformer:
         if not topics_found:
             logging.error("No matching topics found, returning None")
             return None
-
-        sentiment = self.get_sentiment(message.text)
+        
+        try:
+            sentiment = self.get_sentiment(message.text)
+        except IndexError as e:
+            logging.error("Token indices sequence length over 128, skipping message.")
+            return None
 
         dataframes = []
         for topic in topics_found:

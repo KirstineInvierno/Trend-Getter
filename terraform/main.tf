@@ -315,21 +315,19 @@ resource "aws_lambda_function" "lambda_function" {
   role          = aws_iam_role.lambda_role.arn
   package_type  = "Image"
   image_uri     = "129033205317.dkr.ecr.eu-west-2.amazonaws.com/trend-getter-lambda-ecr:latest"
-  memory_size   = 7168
-  timeout       = 300
+  memory_size   = 10000
+  timeout       = 600
   architectures = ["x86_64"]
 
   environment {
     variables = {
-      DB_HOST               = var.DB_HOST
-      DB_PORT               = var.DB_PORT
-      DB_USER               = var.DB_USERNAME
-      DB_PASSWORD           = var.DB_PASSWORD
-      DB_NAME               = var.DB_NAME
-      DB_SCHEMA             = var.DB_SCHEMA
-      AWS_ACCESS_KEY_ID     = var.AWS_ACCESS_KEY_ID
-      AWS_SECRET_ACCESS_KEY = var.AWS_SECRET_ACCESS_KEY
-      AWS_DEFAULT_REGION    = var.AWS_DEFAULT_REGION
+      DB_HOST     = var.DB_HOST
+      DB_PORT     = var.DB_PORT
+      DB_USER     = var.DB_USERNAME
+      DB_PASSWORD = var.DB_PASSWORD
+      DB_NAME     = var.DB_NAME
+      DB_SCHEMA   = var.DB_SCHEMA
+      HF_HOME     = "/tmp/hf/"
     }
   }
 }
@@ -366,8 +364,7 @@ data "aws_iam_policy_document" "lambda_permissions_notif" {
   statement {
     effect = "Allow"
     actions = [
-      "ses:SendEmail",
-      "ses:SendRawEmail"
+      "ses:*"
     ]
     resources = [
       "*"
@@ -386,19 +383,20 @@ resource "aws_lambda_function" "lambda_function_notif" {
   function_name = "c18-trend-getter-notifications-function"
   role          = aws_iam_role.lambda_role_notif.arn
   package_type  = "Image"
-  image_uri     = "129033205317.dkr.ecr.eu-west-2.amazonaws.com/c18-trend-getter-notifications-ecr:latest"
+  image_uri     = "129033205317.dkr.ecr.eu-west-2.amazonaws.com/c18-trend-getter-notifications-ecr:v4"
   memory_size   = 7168
   timeout       = 300
   architectures = ["x86_64"]
 
   environment {
     variables = {
-      DB_HOST     = var.DB_HOST
-      DB_PORT     = var.DB_PORT
-      DB_USER     = var.DB_USERNAME
-      DB_PASSWORD = var.DB_PASSWORD
-      DB_NAME     = var.DB_NAME
-      DB_SCHEMA   = var.DB_SCHEMA
+      DB_HOST      = var.DB_HOST
+      DB_PORT      = var.DB_PORT
+      DB_USER      = var.DB_USERNAME
+      DB_PASSWORD  = var.DB_PASSWORD
+      DB_NAME      = var.DB_NAME
+      DB_SCHEMA    = var.DB_SCHEMA
+      SENDER_EMAIL = "trendgetterupdates@gmail.com"
     }
   }
 }
