@@ -6,6 +6,7 @@ from insert_topic import TopicInserter, Connection
 from insert_email import EmailInserter
 from insert_topic import TopicInserter
 from insert_subscription import SubscriptionInserter
+from sentiment import sentiment_graph, sentiment_bar
 import gt_dash
 import pandas as pd
 import altair as alt
@@ -23,9 +24,10 @@ def load_mentions():
     connection = Connection()
     conn = connection.get_connection()
     query = """
-           SELECT mention_id,topic_name,timestamp,sentiment_label FROM bluesky.mention
-           join bluesky.topic using(topic_id);
-       """
+            SELECT mention_id,topic_name,timestamp,sentiment_label, sentiment_score FROM bluesky.mention
+            join bluesky.topic using(topic_id);
+        """
+
     try:
         with connection.get_connection() as conn:
             df = pd.read_sql(query, conn)
@@ -173,7 +175,7 @@ def topic_trends(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
     options = st.multiselect(
         "Select a topic to view the number of mentions of that topic per day",
         topic_df["topic_name"].unique(),
-        default="art",
+        default="technology",
         key=5
     )
     if not options:
@@ -207,7 +209,7 @@ def topic_trends_by_hour(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
     options = st.multiselect(
         "Select a topic to view the number of mentions of that topic by hour on a selected day",
         topic_df["topic_name"].unique(),
-        default="art",
+        default="technology",
         key=6,
     )
 
@@ -281,6 +283,7 @@ def topic_sentiment_pie_chart(df: pd.DataFrame, topic_df: pd.DataFrame):
 
 
 if __name__ == "__main__":
+    st.set_page_config(layout="wide")
     st.markdown(
         """
    <style>
@@ -292,7 +295,18 @@ if __name__ == "__main__":
         unsafe_allow_html=True
     )
 
-    st.image("images/trendgetter_logo.png")
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.write(' ')
+
+    with col2:
+        st.image("../images/trendgetter_transparrent.png",
+                 width=600, use_container_width=False)
+
+    with col3:
+        st.write(' ')
+
     df = load_mentions()
     topic_df = load_topics()
 
@@ -306,11 +320,17 @@ if __name__ == "__main__":
         dash_tab, sub_tab, unsub_tab = st.tabs(
             ["Dashboard", "Subscribe", "Unsubscribe"])
         with dash_tab:
-            topic_trends(df, topic_df)
-            st.markdown("---")
-            topic_trends_by_hour(df, topic_df)
-            st.markdown("---")
-            topic_sentiment_pie_chart(df, topic_df)
+            col1, col2 = st.columns(2)
+            with col1:
+                topic_trends(df, topic_df)
+                st.markdown("---")
+                topic_trends_by_hour(df, topic_df)
+            with col2:
+                topic_sentiment_pie_chart(df, topic_df)
+                sentiment_graph(df, topic_df)
+                st.markdown("---")
+                sentiment_bar(df, topic_df)
+
         with sub_tab:
             subscription()
         with unsub_tab:
