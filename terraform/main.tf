@@ -260,7 +260,7 @@ resource "aws_iam_role_policy_attachment" "lambda_s3_attach" {
   policy_arn = aws_iam_policy.lambda_s3_policy.arn
 }
 
-resource "aws_lambda_permission" "allow_bucket" {
+resource "aws_lambda_permission" "allow_lambda" {
   statement_id  = "AllowExecutionFromETLLambda"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.lambda_function_notif.function_name
