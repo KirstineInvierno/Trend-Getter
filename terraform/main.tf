@@ -450,24 +450,24 @@ resource "aws_iam_role_policy_attachment" "step_function_attach_policy" {
 
 
 resource "aws_sfn_state_machine" "etl_sm" {
-  name = "c18-trendgetter-etl-notif-sm"
+  name     = "c18-trendgetter-etl-notif-sm"
   role_arn = aws_iam_role.step_function_role.arn
   definition = jsonencode({
-  "Comment" = "A state machine invoking our two lambdas",
-  "StartAt" = "InvokeETLLambda",
-  "States" = {
-    "InvokeETLLambda" = {
-      "Type" = "Task",
-      "Resource" = "${aws_lambda_function.lambda_function.arn}",
-      "Next" = "InvokeNotificationLambda"
-    },
-    "InvokeNotificationLambda" = {
-      "Type" = "Task",
-      "Resource" = "${aws_lambda_function.lambda_function_notif.arn}",
-      "End" = true
+    "Comment" = "A state machine invoking our two lambdas",
+    "StartAt" = "InvokeETLLambda",
+    "States" = {
+      "InvokeETLLambda" = {
+        "Type"     = "Task",
+        "Resource" = "${aws_lambda_function.lambda_function.arn}",
+        "Next"     = "InvokeNotificationLambda"
+      },
+      "InvokeNotificationLambda" = {
+        "Type"     = "Task",
+        "Resource" = "${aws_lambda_function.lambda_function_notif.arn}",
+        "End"      = true
+      }
     }
-  }
-})
+  })
 }
 ## State machine trigger
 
@@ -488,7 +488,7 @@ resource "aws_iam_role" "eventbridge_invoke_stepfunction_role" {
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
-    Statement: [{
+    Statement : [{
       Effect = "Allow",
       Principal = {
         Service = "events.amazonaws.com"
@@ -503,10 +503,10 @@ resource "aws_iam_policy" "eventbridge_invoke_stepfunction_policy" {
 
   policy = jsonencode({
     Version = "2012-10-17",
-    Statement: [
+    Statement : [
       {
-        Effect = "Allow",
-        Action = "states:StartExecution",
+        Effect   = "Allow",
+        Action   = "states:StartExecution",
         Resource = aws_sfn_state_machine.etl_sm.arn
       }
     ]
@@ -524,7 +524,7 @@ resource "aws_cloudwatch_event_rule" "s3_put_event" {
   name        = "trigger-stepfunction-on-upload"
   description = "Triggers step function on S3 object creation"
   event_pattern = jsonencode({
-    source = ["aws.s3"],
+    source        = ["aws.s3"],
     "detail-type" = ["Object Created"],
     detail = {
       bucket = {
@@ -535,9 +535,9 @@ resource "aws_cloudwatch_event_rule" "s3_put_event" {
 }
 
 resource "aws_cloudwatch_event_target" "trigger_stepfunction" {
-  rule      = aws_cloudwatch_event_rule.s3_put_event.name
-  arn       = aws_sfn_state_machine.etl_sm.arn
-  role_arn  = aws_iam_role.eventbridge_invoke_stepfunction_role.arn
+  rule     = aws_cloudwatch_event_rule.s3_put_event.name
+  arn      = aws_sfn_state_machine.etl_sm.arn
+  role_arn = aws_iam_role.eventbridge_invoke_stepfunction_role.arn
 }
 
 
