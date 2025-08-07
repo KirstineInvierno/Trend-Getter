@@ -333,7 +333,7 @@ resource "aws_lambda_function" "lambda_function_notif" {
   function_name = "c18-trend-getter-notifications-function"
   role          = aws_iam_role.lambda_role_notif.arn
   package_type  = "Image"
-  image_uri     = "129033205317.dkr.ecr.eu-west-2.amazonaws.com/c18-trend-getter-notifications-ecr:latest"
+  image_uri     = "129033205317.dkr.ecr.eu-west-2.amazonaws.com/c18-trend-getter-notifications-ecr:v4"
   memory_size   = 7168
   timeout       = 300
   architectures = ["x86_64"]
