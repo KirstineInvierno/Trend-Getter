@@ -368,7 +368,7 @@ resource "aws_lambda_permission" "allow_s3" {
 }
 
 resource "aws_s3_bucket_notification" "s3_trigger" {
-  bucket = aws_s3_bucket.c18-trend-getter-s3.arn.id
+  bucket = aws_s3_bucket.c18-trend-getter-s3.id
 
   lambda_function {
     lambda_function_arn = aws_lambda_function.lambda_function.arn
