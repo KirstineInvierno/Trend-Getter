@@ -125,10 +125,7 @@ resource "aws_ecr_repository" "c18-trend-getter-notifications-ecr" {
   image_tag_mutability = "MUTABLE"
 }
 
-resource "aws_ecr_repository" "c18-trend-getter-dashboard-ecr" {
-  name                 = "c18-trend-getter-dashboard-ecr"
-  image_tag_mutability = "MUTABLE"
-}
+
 
 # EC2
 
