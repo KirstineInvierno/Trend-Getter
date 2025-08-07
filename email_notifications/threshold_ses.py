@@ -23,7 +23,7 @@ class Sender():
 
         body_text = ("Over the last ten minutes, there have been over "
                      f"{subscription_dict['threshold']} "
-                     f"mentions of {subscription_dict['topic_name']}. "
+                     f"mentions of {subscription_dict['topic_name']} in that period. "
                      f"In total, there were {subscription_dict['mention_count']}.")
 
         body_html = f"""<html>
