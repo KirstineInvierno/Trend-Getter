@@ -377,3 +377,4 @@ resource "aws_s3_bucket_notification" "s3_trigger" {
 
   depends_on = [aws_lambda_permission.allow_s3]
 }
+# updated
