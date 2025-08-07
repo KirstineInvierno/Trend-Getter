@@ -321,17 +321,6 @@ resource "aws_lambda_function" "lambda_function" {
 
   environment {
     variables = {
-<<<<<<< HEAD
-      DB_HOST               = var.DB_HOST
-      DB_PORT               = var.DB_PORT
-      DB_USER               = var.DB_USERNAME
-      DB_PASSWORD           = var.DB_PASSWORD
-      DB_NAME               = var.DB_NAME
-      DB_SCHEMA             = var.DB_SCHEMA
-      AWS_ACCESS_KEY_ID     = var.AWS_ACCESS_KEY_ID
-      AWS_SECRET_ACCESS_KEY = var.AWS_SECRET_ACCESS_KEY
-      AWS_DEFAULT_REGION    = var.AWS_DEFAULT_REGION
-=======
       DB_HOST     = var.DB_HOST
       DB_PORT     = var.DB_PORT
       DB_USER     = var.DB_USERNAME
@@ -339,7 +328,6 @@ resource "aws_lambda_function" "lambda_function" {
       DB_NAME     = var.DB_NAME
       DB_SCHEMA   = var.DB_SCHEMA
       HF_HOME     = "/tmp/hf/"
->>>>>>> 210c1976c1700971d1ebe817ed3199816f708d13
     }
   }
 }
