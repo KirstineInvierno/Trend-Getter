@@ -261,11 +261,11 @@ resource "aws_iam_role_policy_attachment" "lambda_s3_attach" {
 }
 
 resource "aws_lambda_permission" "allow_bucket" {
-  statement_id  = "AllowExecutionFromS3Bucket"
+  statement_id  = "AllowExecutionFromETLLambda"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.lambda_function_notif.function_name
-  principal     = "129033205317"
-  source_arn    = arn:aws:lambda:eu-west-2:129033205317:function:c18-trend-getter-lambda-function
+  principal     = "lambda.amazonaws.com"
+  source_arn    = aws_lambda_function.lambda_function.arn
 }
 
 resource "aws_lambda_function" "lambda_function" {
@@ -359,10 +359,21 @@ resource "aws_lambda_function" "lambda_function_notif" {
   }
 }
 
-resource "aws_lambda_permission" "allow_lambda" {
-  statement_id  = "AllowExecutionFromLambda"
+resource "aws_lambda_permission" "allow_s3" {
+  statement_id  = "AllowExecutionFromS3"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.lambda_function.function_name
   principal     = "s3.amazonaws.com"
-  source_arn    = arn:aws:s3:::c18-trend-getter-s3
+  source_arn    = aws_s3_bucket.trend_getter_bucket.arn
+}
+
+resource "aws_s3_bucket_notification" "s3_trigger" {
+  bucket = aws_s3_bucket.trend_getter_bucket.id
+
+  lambda_function {
+    lambda_function_arn = aws_lambda_function.lambda_function.arn
+    events              = ["s3:ObjectCreated:*"]
+  }
+
+  depends_on = [aws_lambda_permission.allow_s3_invoke]
 }
