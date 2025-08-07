@@ -4,19 +4,22 @@ import altair as alt
 from scipy import ndimage
 
 
-def sentiment_mentions(df: pd.DataFrame) -> pd.DataFrame:
+def sentiment_mentions(df: pd.DataFrame, group: bool = True) -> pd.DataFrame:
     weightings = {
         "NEG": -1,
         "NEU": 1,
         "POS": 1
     }
 
+    print(df)
+
     df["weighting"] = df["sentiment_label"].map(
         lambda label: weightings[label])
 
-    data_source = df.groupby("topic_name").sum("weighting").reset_index()
+    if group:
+        df = df.groupby("topic_name").sum("weighting").reset_index()
 
-    return data_source
+    return df
 
 
 def sentiment_bar(mentions_df: pd.DataFrame) -> None:
@@ -52,6 +55,8 @@ def sentiment_graph(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
 
     if df.empty:
         st.info(f"No mentions for the selected topic(s)")
+
+    df = sentiment_mentions(df, False)
 
     df['smoothed_weighting'] = ndimage.gaussian_filter1d(
         df['weighting'], sigma=1.0)
