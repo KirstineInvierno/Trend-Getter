@@ -42,3 +42,13 @@ variable "AWS_DEFAULT_REGION" {
   type      = string
   sensitive = true
 }
+
+variable "BLUESKY_EMAIL" {
+  type      = string
+  sensitive = true
+}
+
+variable "BLUESKY_PASSWORD" {
+  type      = string
+  sensitive = true
+}
