@@ -613,7 +613,7 @@ resource "aws_ecs_task_definition" "streamlit" {
         { name = "DB_NAME", value = var.DB_NAME },
         { name = "DB_USER", value = var.DB_USERNAME },
         { name = "DB_PASSWORD", value = var.DB_PASSWORD },
-        { name = "DB_PORT",value = tostring(var.DB_PORT) },
+        { name = "DB_PORT", value = tostring(var.DB_PORT) },
         { name = "DB_SCHEMA", value = var.DB_SCHEMA }
       ]
       logConfiguration = {
