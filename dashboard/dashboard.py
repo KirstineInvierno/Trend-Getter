@@ -6,6 +6,7 @@ from insert_topic import TopicInserter, Connection
 from insert_email import EmailInserter
 from insert_topic import TopicInserter
 from insert_subscription import SubscriptionInserter
+from sentiment import sentiment_graph, sentiment_bar
 import gt_dash
 import pandas as pd
 import altair as alt
@@ -23,9 +24,10 @@ def load_mentions():
     connection = Connection()
     conn = connection.get_connection()
     query = """
-            SELECT mention_id,topic_name,timestamp,sentiment_label FROM bluesky.mention
+            SELECT mention_id,topic_name,timestamp,sentiment_label, sentiment_score FROM bluesky.mention
             join bluesky.topic using(topic_id);
         """
+
     try:
         with connection.get_connection() as conn:
             df = pd.read_sql(query, conn)
@@ -41,8 +43,8 @@ def load_topics():
     connection = Connection()
     conn = connection.get_connection()
     query = """
-            SELECT topic_name FROM  bluesky.topic;
-        """
+           SELECT topic_name FROM  bluesky.topic;
+       """
     try:
         with connection.get_connection() as conn:
             df = pd.read_sql(query, conn)
@@ -73,6 +75,10 @@ def validate_email(email: str) -> bool:
 
 def unsubscribe() -> None:
     """Allows a user to enter their email and unsubscribe to a topic"""
+    st.markdown("""
+        **Unsubscribe to a topic**  
+       - Unsubscribe from a topic to stop receiving notifications in cases of activity spikes for that topic
+        """)
     email_input = st.text_input("Enter your email to manage subscriptions:")
     if email_input:
         if validate_email(email_input):
@@ -114,6 +120,12 @@ def unsubscribe() -> None:
 def subscription() -> None:
     """Takes an email, topic and a threshold, and subscribes the user to the topic if they
     are not already subscribed. If the user is already subscribed, the threshold is updated."""
+    st.markdown("""
+        **Subscribe to a topic**  
+       - Subscribe to a topic to be emailed when there are activity spikes for the chosen topic
+       - If the topic does not exist, BlueSky will start tracking the topic for mentions.
+       - You can enter a topic you are already subscribed to and change the threshold of mentions
+        """)
     with st.form("Subscribe form"):
         email_input = st.text_input("Enter your email:")
         topic_input = st.text_input("Subscribe to a topic:")
@@ -153,19 +165,28 @@ def subscription() -> None:
 
 def topic_trends(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
     """Loads an altair line chart that shows trends of a topic per day """
+    st.markdown("""
+        **Bluesky topic trends** 
+                
+        This is a live dashboard that tracks topic mentions on bluesky in realtime.
+        - View the trends of chosen topic(s) across multiple days 
+        - View the trends of chosen topic(s) on a specific day
+        """)
     options = st.multiselect(
         "Select a topic to view the number of mentions of that topic per day",
         topic_df["topic_name"].unique(),
-        default="art",
+        default="technology",
         key=5
     )
     if not options:
         st.info("Please select a topic")
         return
 
-    df = df[df["topic_name"].isin(options)]
+    df = df[df["topic_name"].isin(options)].copy()
     df['timestamp'] = pd.to_datetime(
         df['timestamp'])
+
+    df['topic_name'] = df['topic_name'].str.capitalize()
 
     df = df.groupby([pd.Grouper(key='timestamp', freq='D'),
                     "topic_name"]).size().reset_index(name='mentions')
@@ -179,7 +200,7 @@ def topic_trends(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
         color=alt.Color('topic_name:N', title="Topic"),
         tooltip=["timestamp", "mentions", "topic_name"]).configure(
         background='#EBF7F7'
-    ).properties(title='Mentions by topic per day')
+    ).properties(title=alt.Title(text='Mentions by topic per day', anchor='middle'))
 
     st.altair_chart(line_chart)
 
@@ -187,6 +208,17 @@ def topic_trends(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
 def topic_trends_by_hour(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
     """Displays an hourly line chart for mentions by topic on a selected day."""
 
+    options = st.multiselect(
+        "Select a topic to view the number of mentions of that topic by hour on a selected day",
+        topic_df["topic_name"].unique(),
+        default="technology",
+        key=6,
+    )
+
+    if not options:
+        st.info("Please select a topic")
+        return
+    df = df[df["topic_name"].isin(options)].copy()
     dates = pd.to_datetime(df["timestamp"]).dt.date.unique()
     selected_date = st.date_input(
         "Select a date to view the trend of a topic",
@@ -194,18 +226,8 @@ def topic_trends_by_hour(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
         max_value=max(dates)
     )
 
-    options = st.multiselect(
-        "Select a topic to view the number of mentions of that topic by hour on a selected day",
-        topic_df["topic_name"].unique(),
-        default="art",
-        key=6,
-    )
-    if not options:
-        st.info("Please select a topic")
-        return
-
     df["timestamp"] = pd.to_datetime(df["timestamp"])
-    df = df[df["topic_name"].isin(options)]
+
     df = df[df["timestamp"].dt.date == selected_date]
 
     df["hour"] = df["timestamp"].dt.hour
@@ -215,6 +237,8 @@ def topic_trends_by_hour(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
         st.info(f"No mentions for the selected topic(s) on {selected_date}")
         return
 
+    df['topic_name'] = df['topic_name'].str.capitalize()
+
     chart = alt.Chart(df).mark_line(point=True).encode(
         x=alt.X("hour:Q", axis=alt.Axis(title="Hour of Day")),
         y=alt.Y("mentions:Q", axis=alt.Axis(title="Mentions")),
@@ -222,24 +246,72 @@ def topic_trends_by_hour(df: pd.DataFrame, topic_df: pd.DataFrame) -> None:
         tooltip=["hour", "mentions", "topic_name"]
     ).configure(
         background='#EBF7F7'
-    ).properties(title=f"Hourly Mentions on {selected_date}")
+    ).properties(title=alt.Title(text=f"Hourly Mentions on {selected_date}", anchor='middle'))
 
     st.altair_chart(chart, use_container_width=True)
 
 
+def topic_sentiment_pie_chart(df: pd.DataFrame, topic_df: pd.DataFrame):
+    st.markdown("""
+        **View the sentiment of topic(s)**  
+           The sentiment of a topic is the public opinion towards a topic and is calculated using an AI model.
+        """)
+    options = st.multiselect(
+        "Select a topic to view the sentiment of its mentions.",
+        topic_df["topic_name"].unique(),
+        default="artificial intelligence",
+        key=7,
+    )
+
+    if not options:
+        st.info("Please select a topic")
+        return
+
+    df = df[df["topic_name"].isin(options)].copy()
+    topic_names = df["topic_name"].unique()
+    title = ", ".join(topic_names)
+    sentiment_df = df["sentiment_label"].value_counts().reset_index()
+    sentiment_df.columns = ["sentiment of topic(s)", "mention count"]
+    sentiment_df["sentiment of topic(s)"] = sentiment_df["sentiment of topic(s)"].replace(
+        {"POS": "Positive", "NEG": "Negative", "NEU": "Neutral"})
+    colours = alt.Scale(domain=["Negative", "Positive", "Neutral"],
+                        range=["#bb3131", "#009e69", "#eeece1"])
+    pie_chart = alt.Chart(sentiment_df).mark_arc(stroke="black", strokeWidth=0.5).encode(
+        theta=alt.Theta("mention count:Q"),
+        color=alt.Color("sentiment of topic(s):N", scale=colours),
+        tooltip=["sentiment of topic(s)", "mention count"]
+    ).configure(
+        background='#EBF7F7'
+    ).properties(title=alt.Title(text=f"Public sentiment for {title}", anchor='middle'))
+    title = alt.Title(text="Popularity Score Over time", anchor='middle')
+    st.altair_chart(pie_chart, use_container_width=True)
+
+
 if __name__ == "__main__":
+    st.set_page_config(layout="wide")
     st.markdown(
         """
-    <style>
-    .stApp {
-        background-color: #E1FAF9;
-    }
-    </style>
-    """,
+   <style>
+   .stApp {
+       background-color: #E1FAF9;
+   }
+   </style>
+   """,
         unsafe_allow_html=True
     )
 
-    st.image("images/trendgetter_logo.png")
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.write(' ')
+
+    with col2:
+        st.image("../images/trendgetter_transparrent.png",
+                 width=600, use_container_width=False)
+
+    with col3:
+        st.write(' ')
+
     df = load_mentions()
     topic_df = load_topics()
 
@@ -253,9 +325,17 @@ if __name__ == "__main__":
         dash_tab, sub_tab, unsub_tab = st.tabs(
             ["Dashboard", "Subscribe", "Unsubscribe"])
         with dash_tab:
-            topic_trends(df, topic_df)
-            st.markdown("---")
-            topic_trends_by_hour(df, topic_df)
+            col1, col2 = st.columns(2)
+            with col1:
+                topic_trends(df, topic_df)
+                st.markdown("---")
+                topic_trends_by_hour(df, topic_df)
+            with col2:
+                topic_sentiment_pie_chart(df, topic_df)
+                sentiment_graph(df, topic_df)
+                st.markdown("---")
+                sentiment_bar(df, topic_df)
+
         with sub_tab:
             subscription()
         with unsub_tab:
@@ -263,3 +343,7 @@ if __name__ == "__main__":
 
     with tab2:
         gt_dash.gt_dashboard()
+
+if "initial_rerun_done" not in st.session_state:
+    st.session_state.initial_rerun_done = True
+    st.rerun()

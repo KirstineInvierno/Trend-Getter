@@ -1,4 +1,4 @@
-'''Script to obtain data from RDS to check whether users need to be notified.'''
+"""Script to obtain data from RDS to check whether users need to be notified."""
 from os import environ
 from datetime import datetime, timedelta
 import pandas as pd
@@ -7,15 +7,15 @@ import sqlalchemy
 
 
 class DataGetter():
-
     """Class which interacts with db"""
 
     def __init__(self):
-        """Initializes DataGetter"""
+        """Initialises DataGetter"""
         load_dotenv()
         self.sql_conn = self.get_sql_conn()
         self.subscriptions_dict = self.get_subscriptions_data()
         self.mentions_df = self.get_recent_mentions()
+        self.topics_dict = self.get_topics_dict(5)
 
     def get_subscriptions_data(self) -> dict:
         """Obtains the current notification subscriptions from RDS"""
@@ -46,17 +46,24 @@ class DataGetter():
     def get_ten_minutes_ago(self) -> str:
         """Returns a string of timestamp ten minutes ago for use in the sql query"""
         now = self.get_now()
-        ten_ago = now - timedelta(minutes=10)
-        ten_ago_string = ten_ago.strftime("%Y-%m-%d %H:%M:%S")
+        ten_minutes_ago = now - timedelta(minutes=10)
+        ten_ago_string = ten_minutes_ago.strftime("%Y-%m-%d %H:%M:%S")
         return ten_ago_string
 
     def get_recent_mentions(self) -> pd.DataFrame:
         """Gets mentions from previous ten minute cycle from RDS"""
         time_str = self.get_ten_minutes_ago()
-        mentions_df = pd.read_sql(f"""SELECT mention_id, topic_id
-                                  FROM bluesky.mention WHERE timestamp > '{time_str}'""",
+        mentions_df = pd.read_sql(f"""SELECT mention_id, topic_id, topic_name
+                                  FROM bluesky.mention 
+                                    JOIN bluesky.topic USING (topic_id) WHERE timestamp > '{time_str}'""",
                                   con=self.sql_conn)
         return mentions_df
+
+    def get_topics_dict(self, threshold: int) -> dict:
+        """Returns list of topics with over a threshold of mentions"""
+        mentions_vc = dict(self.mentions_df['topic_name'].value_counts(
+        ).loc[lambda x: x > threshold])
+        return mentions_vc
 
 
 class ThresholdChecker():
@@ -80,6 +87,4 @@ class ThresholdChecker():
             if count:
                 subscriptions_dict[row]['mention_count'] = count
                 thresholds_met.append(subscriptions_dict[row])
-                print(row, self.check_threshold(
-                    subscriptions_dict[row], mentions_df))
         return thresholds_met

@@ -13,7 +13,7 @@ class Sender():
     """Class which sends emails"""
 
     def __init__(self):
-        """Initializes instances with ses client"""
+        """Initialises instances with ses client"""
         self.ses_client = self.get_ses_client()
 
     def create_email_from_dict(self, subscription_dict: dict) -> dict:
@@ -21,9 +21,9 @@ class Sender():
 
         subject = f"Activity Spike relating to {subscription_dict['topic_name']}"
 
-        body_text = ("Over the last ten minutes, there have been over"
+        body_text = ("Over the last ten minutes, there have been over "
                      f"{subscription_dict['threshold']} "
-                     f"mentions of {subscription_dict['topic_name']}."
+                     f"mentions of {subscription_dict['topic_name']} in that period. "
                      f"In total, there were {subscription_dict['mention_count']}.")
 
         body_html = f"""<html>
@@ -38,16 +38,11 @@ class Sender():
 
     def get_ses_client(self) -> boto3.Client:
         """Returns a ses client to use to send emails"""
-        region = environ["AWS_DEFAULT_REGION"]
-        access_key = environ["AWS_ACCESS_KEY_ID"]
-        secret_key = environ['AWS_SECRET_ACCESS_KEY']
 
         ses_client = boto3.client(
-            "ses",
-            region_name=region,
-            aws_access_key_id=access_key,
-            aws_secret_access_key=secret_key,
+            "ses"
         )
+
         return ses_client
 
     def send_email(self, subscription_dict: dict, email_dict: dict) -> None:
@@ -74,8 +69,8 @@ class Sender():
                     }
                 }
             )
-        except ClientError:
-            print(f'{subscription_dict['email']} not verified')
+        except ClientError as e:
+            print(f'{subscription_dict['email']} not verified?', e)
 
     def send_all_emails(self, subs_list: list[dict]) -> None:
         """Calls send_email function for each notification required"""

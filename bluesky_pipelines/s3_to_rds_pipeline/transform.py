@@ -1,9 +1,5 @@
-"""
-Transform script:
-Takes a message extracted from the API and transforms it to a 
-DataFrame ready to load into the database
-"""
-
+"""Transform script: Takes a message extracted from the API and transforms it to a 
+DataFrame ready to load into the database. """
 # pylint: disable=W1203
 
 from datetime import datetime
@@ -23,12 +19,12 @@ logging.basicConfig(
 
 
 class MessageError(Exception):
-    """Error for when creating Message object"""
+    """Error for when creating Message object."""
     pass
 
 
 class Message:
-    """message recieved from API"""
+    """Message received from API."""
 
     def __init__(self, message_dict: dict):
         self._validation(message_dict)
@@ -57,7 +53,7 @@ class Message:
 
     @property
     def timestamp(self) -> datetime:
-        """Extracts timestamp from message"""
+        """Extracts timestamp from message."""
         if self._timestamp is None:
             temp_timestamp = self._timestamp_string
             self._timestamp = datetime.fromisoformat(temp_timestamp)
@@ -66,7 +62,7 @@ class Message:
 
 
 class MessageTransformer:
-    """Transforms API messages into DataFrames for database loading"""
+    """Transforms API messages into DataFrames for database loading."""
 
     def __init__(self, topics_dict: dict, sentiment_model: str = TRANSFORMER_MODEL):
         self.sentiment_model = sentiment_model
@@ -81,12 +77,9 @@ class MessageTransformer:
         return self._sentiment_pipeline
 
     def get_sentiment(self, text: str) -> dict:
-        """
-        Analyzes text sentiment using transformer model
-
+        """Analyses text sentiment using transformer model
         Returns:
-            dict with label ('POS', 'NEG', 'NEU') and confidence score (0-1)
-        """
+            dict with label ('POS', 'NEG', 'NEU') and confidence score (0-1)"""
         logging.info("Running sentiment analysis...")
         time1 = time.time()
         llm_pipeline = self.sentiment_pipeline
@@ -97,12 +90,7 @@ class MessageTransformer:
         return max(sentiments, key=lambda sentiment: sentiment.get("score"))
 
     def find_topics_in_text(self, text: str) -> list[str]:
-        """
-        Finds which subscribed topics are mentioned in the text
-
-        Returns:
-            List of topics found, or None if no topics found
-        """
+        """Finds which subscribed topics are mentioned in the text."""
         logging.info("Matching topics in topics list...")
         topics_found = []
 
@@ -113,7 +101,7 @@ class MessageTransformer:
         return topics_found
 
     def create_dataframe(self, topic_id: str, sentiment: dict, timestamp: datetime) -> pd.DataFrame:
-        """Creates a single-row DataFrame with the given data"""
+        """Creates a single-row DataFrame with the given data."""
         logging.info("Creating DataFrame...")
         return pd.DataFrame({
             "topic_id": [topic_id],
@@ -123,23 +111,21 @@ class MessageTransformer:
         })
 
     def transform(self, message: Message) -> pd.DataFrame | None:
-        """
-        Main transformation method: converts message to DataFrame
-
-        Args:
-            message: Dictionary containing message data from API
-
+        """Converts message to DataFrame.
         Returns:
-            DataFrame ready for database loading, or None if no topics found
-        """
+            DataFrame ready for database loading, or None if no topics found."""
         time1 = time.time()
         logging.info("Begin transform script")
         topics_found = self.find_topics_in_text(message.text)
         if not topics_found:
             logging.error("No matching topics found, returning None")
             return None
-
-        sentiment = self.get_sentiment(message.text)
+        
+        try:
+            sentiment = self.get_sentiment(message.text)
+        except IndexError as e:
+            logging.error("Token indices sequence length over 128, skipping message.")
+            return None
 
         dataframes = []
         for topic in topics_found:
@@ -155,7 +141,7 @@ class MessageTransformer:
 
 
 def main():
-    """Main function"""
+    """Main function."""
     message = Message({
         'text': 'I love donald trump',
         'langs': ['en'],
