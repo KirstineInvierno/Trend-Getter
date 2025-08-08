@@ -614,8 +614,8 @@ resource "aws_ecs_task_definition" "streamlit" {
         { name = "DB_USER", value = var.DB_USERNAME },
         { name = "DB_PASSWORD", value = var.DB_PASSWORD },
         { name = "DB_PORT", value = var.DB_PORT },
-        { name = "DB_HOST", value = VAR.DB_HOST },
-        { name = "DB_SCHEMA", value = VAR.DB_SCHEMA }
+        { name = "DB_HOST", value = var.DB_HOST },
+        { name = "DB_SCHEMA", value = var.DB_SCHEMA }
       ]
       logConfiguration = {
         logDriver = "awslogs"
