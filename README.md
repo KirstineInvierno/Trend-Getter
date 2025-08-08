@@ -69,6 +69,8 @@ Environment Variables (see below)
     - DB_USER
     - TF_VAR_DB_PASSWORD
     - TF_VAR_DB_USERNAME
+    - BLUESKY_EMAIL
+    - BLUESKY_PASSWORD
 
 Important:
 Do not store your AWS access keys in .env for deployed Lambdas — use an IAM Role with the correct permissions.
