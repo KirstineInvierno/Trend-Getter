@@ -64,7 +64,9 @@ class STDisplayer():
         """Creates a line chart which shows the popularity of a topic over a certain timeframe"""
 
         data = self.filter_trend_options(df, unique_key='trend_chart')
-
+        if data.empty:
+            st.info("Please select a topic")
+            return
         st.line_chart(data, x='date', x_label='date',  y='hits',
                       y_label='Hit Rate', color='topic_name')
 
@@ -104,13 +106,24 @@ def gt_dashboard():
         list(timeframe_options.keys())
     )
     timeframe = timeframe_options[timeframe_label]
+    if "prev_timeframe" not in st.session_state:
+        st.session_state.prev_timeframe = timeframe
+
+    elif st.session_state.prev_timeframe != timeframe:
+        st.session_state.trend_df = pd.DataFrame(
+            data={'date': [], 'topic_name': [], 'hits': []})
+        st.session_state.prev_timeframe = timeframe
 
     with st.form("trend_form"):
         input_topic = display.topic_input()
         submitted = st.form_submit_button("Submit")
 
-    if input_topic and submitted:
+    if not input_topic:
+        st.info("Please select a topic")
+        return
 
+    if input_topic and submitted:
         manipulator.update_dataframes(input_topic, timeframe)
 
+    if not st.session_state.trend_df.empty:
         display.trend_line_chart(st.session_state.trend_df)

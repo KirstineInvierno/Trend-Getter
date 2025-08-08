@@ -4,6 +4,7 @@ from os import environ
 import time
 import pandas as pd
 import sqlalchemy
+import psycopg2
 from dotenv import load_dotenv
 import logging
 
