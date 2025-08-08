@@ -464,7 +464,7 @@ resource "aws_lambda_function" "lambda_function_bsky_bot" {
 
   environment {
     variables = {
-      BLUESKY_EMAIL = var.BLUESKY_EMAIL
+      BLUESKY_EMAIL    = var.BLUESKY_EMAIL
       BLUESKY_PASSWORD = var.BLUESKY_PASSWORD
     }
   }
