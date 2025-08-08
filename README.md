@@ -42,6 +42,7 @@ TrendGetter is a trend monitoring and analytics tool that allows users to select
  - This dashboard contains visualisations of both Google Trends data and BlueSky posts.
  - It also allows users to subscribe and unsubscribe from notifications for different topics, and request new topics to be tracked.
  - Streamlit was chosen due to the visually accessible user interfaces that can be created, as well as its integration with python code which allowed easy interaction with the rest of the architecture when required by a user action.
+ - The Trendgetter website can be found on http://trend-getter.co.uk:8501/
 
  ## Entity Relationship Diagram
  ![alt text for screen readers](./tg_erd.png "Architecture Diagram")
