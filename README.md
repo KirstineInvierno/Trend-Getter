@@ -86,14 +86,18 @@ Do not store your AWS access keys in .env for deployed Lambdas — use an IAM Ro
 Run the schema.sql file
 
 3. Install dependencies
-```cd trend-getter
-pip install -r requirements.txt```
+```
+cd trend-getter
+pip install -r requirements.txt
+```
 
 4. Run terraform
-```cd terraform
+```
+cd terraform
    terraform init
    terraform plan
-   terraform apply```
+   terraform apply
+```
 
 ## How the Pipeline Works
 Data Collection pipeline running on ECS fetches raw mentions → uploads JSON to S3.
