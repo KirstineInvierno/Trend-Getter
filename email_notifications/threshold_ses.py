@@ -4,7 +4,6 @@ import boto3
 from dotenv import load_dotenv
 from botocore.exceptions import ClientError
 from threshold_check import DataGetter, ThresholdChecker
-from bot import BlueskyPoster
 
 
 load_dotenv()
@@ -17,7 +16,7 @@ class Sender():
         """Initialises instances with ses client"""
         self.ses_client = self.get_ses_client()
 
-    def create_email_from_dict(self, subscription_dict: dict) -> str:
+    def create_email_from_dict(self, subscription_dict: dict) -> dict:
         """Creates HTML to be sent in email"""
 
         subject = f"Activity Spike relating to {subscription_dict['topic_name']}"
@@ -41,7 +40,8 @@ class Sender():
         """Returns a ses client to use to send emails"""
 
         ses_client = boto3.client(
-            "ses"
+            "ses",
+            region_name="eu-west-2"
         )
 
         return ses_client
@@ -73,7 +73,7 @@ class Sender():
         except ClientError as e:
             print(f'{subscription_dict['email']} not verified?', e)
 
-    def send_all_emails(self, subs_list: list[dict]):
+    def send_all_emails(self, subs_list: list[dict]) -> None:
         """Calls send_email function for each notification required"""
         for subscription in subs_list:
             email_dict = self.create_email_from_dict(subscription)
