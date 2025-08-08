@@ -7,14 +7,14 @@ In a world driven by reputation and real-time information, individuals and brand
 
 TrendGetter is a trend monitoring and analytics tool that allows users to select topics and monitor their growth, sentiment, and related activity over time. It continuously collects data from targeted feeds, processes it, and stores results in a database, which can be explored via a live dashboard.
 
-## Deliverables
-- Users will be able to submit topics to be tracked by the service.
-- Sites/feeds will be monitored frequently for mentions of the topics and related activity, storing all relevant data in a database.
-- Users will be able to access a live dashboard (hosted on AWS) exploring:
-    - Interest/activity of topics over time
-    - Comparison of keywords/topics against one another
-    - Topic sentiment
-- Notifications for changes in activity will be sent to subscribers.
+## Features
+- Topic Tracking: Users can add topics/keywords to be tracked.
+- Real-Time Monitoring: Monitors feeds for mentions of tracked topics.
+- Data Storage: Stores all relevant mentions in an AWS RDS database.
+- Analysis: Tracks growth and sentiment.
+- Notifications: Sends alerts for spikes in activity.
+- Live Dashboard: Visualises trends, comparisons, and sentiment.
+
 
 ## Architecture
  ### System Architecture Diagram
@@ -48,7 +48,17 @@ TrendGetter is a trend monitoring and analytics tool that allows users to select
  - This is the ERD which represents the setup of the user/mention data in the Postgres RDS.
  - The database has been normalised to 3NF to avoid the keeping of redundant data.
 
-## Set-up
+
+Environment Variables (see below)
+## Prerequisites
+- Create an .env file with:
+    - DB_USER=your-db-user
+    - DB_PASSWORD=your-db-password
+    - DB_HOST=your-db-host
+    - DB_NAME=your-db-name
+    - DB_PORT=the-db-port
+    - DB_SCHEMA=-your-db-scchema
+
 - You must have the following repository secrets on GitHub:
     - AWS_ACCESS_KEY_ID
     - AWS_SECRET_ACCESS_KEY
@@ -60,12 +70,34 @@ TrendGetter is a trend monitoring and analytics tool that allows users to select
     - TF_VAR_DB_PASSWORD
     - TF_VAR_DB_USERNAME
 
-## Files explained
+Important:
+Do not store your AWS access keys in .env for deployed Lambdas — use an IAM Role with the correct permissions.
+
+
+## Local Development
+1. Clone the repository
+```git clone <github_url>```
+
+2. Create the database schema
+```cd schema_creation```
+Run the schema.sql file
+
+3. Install dependencies
+```cd trend-getter
+pip install -r requirements.txt```
+
+
+## How the Pipeline Works
+Data Collection pipeline running on ECS fetches raw mentions → uploads JSON to S3.
+ETL Lambda triggers → reads latest file from S3 → transforms → writes to RDS.
+Notification Lambda triggers on ETL completion → sends alerts.
+Dashboard queries RDS for visualising data.
+
 
 ## CI/CD
-- In order to smoothly develop and integrate changes to our service, we made use of github actions.
-- Firstly, we used a workflow which automatically ran test files and pylint before any merge to the main branch, only allowing the merge to go ahead if the checks passed satisfactorily. This prevented bad quality, potentially disruptive code from being added to the main branch.
-- We also implemented a Terraform which stored the current state of our cloud system and automatically applied any changes we merged to the main branch.
+- In order to smoothly develop and integrate changes to the service, a GitHub workflow is made which automatically runs test files and pylint before any merge to the main branch, only allowing the merge to go ahead if the checks passed satisfactorily. This prevents poor quality, potentially disruptive code from being added to the main branch.
+- There is also a Terraform workflow implemented which stores the current state of the AWS services and automatically applies any changes merged to the main branch.
+
 
 ## Technology
 - Python - pandas, psycopg2, pylint, pytest
@@ -75,3 +107,7 @@ TrendGetter is a trend monitoring and analytics tool that allows users to select
 - PostgreSQL
 - Streamlit
 - CI/CD
+
+
+## Contributing
+PRs are welcome! Please follow PEP8 for Python code and include docstrings.
