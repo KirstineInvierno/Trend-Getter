@@ -36,7 +36,7 @@ class Sender():
         email_dict = {'subject': subject, 'text': body_text, 'html': body_html}
         return email_dict
 
-    def get_ses_client(self) -> boto3.Client:
+    def get_ses_client(self):
         """Returns a ses client to use to send emails"""
 
         ses_client = boto3.client(
