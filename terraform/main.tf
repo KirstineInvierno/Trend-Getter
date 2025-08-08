@@ -609,12 +609,13 @@ resource "aws_ecs_task_definition" "streamlit" {
         { containerPort = 8501, protocol = "tcp" }
       ]
       environment = [
-        { name = "DB_HOST", value = "value" },
-        { name = "DB_NAME", value = "trendgetterdb" },
-        { name = "DB_USER", value = "trendgetter" },
-        { name = "DB_PASSWORD", value = "trendypwd101" },
-        { name = "DB_HOST", value = "c18trendgetterrds.c57vkec7dkkx.eu-west-2.rds.amazonaws.com" },
-        { name = "DB_HOST", value = "5432" }
+        { name = "DB_HOST", value = var.DB_HOST },
+        { name = "DB_NAME", value = var.DB_NAME },
+        { name = "DB_USER", value = var.DB_USERNAME },
+        { name = "DB_PASSWORD", value = var.DB_PASSWORD },
+        { name = "DB_PORT", value = var.DB_PORT },
+        { name = "DB_HOST", value = VAR.DB_HOST },
+        { name = "DB_SCHEMA", value = VAR.DB_SCHEMA }
       ]
       logConfiguration = {
         logDriver = "awslogs"
