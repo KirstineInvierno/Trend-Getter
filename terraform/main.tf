@@ -604,7 +604,7 @@ resource "aws_ecs_task_definition" "streamlit" {
   container_definitions = jsonencode([
     {
       name  = "c18-trendgetter-container"
-      image = "${aws_ecr_repository.streamlit.repository_url}:latest"
+      image = "${aws_ecr_repository.c18-trend-getter-dashboard-ecr}:latest"
       portMappings = [
         { containerPort = 8501, protocol = "tcp" }
       ]
