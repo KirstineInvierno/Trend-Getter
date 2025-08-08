@@ -1,0 +1,7 @@
+streamlit
+pytrends
+altair
+scipy
+pandas
+psycopg2
+dotenv
