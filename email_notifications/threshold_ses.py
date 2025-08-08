@@ -4,6 +4,7 @@ import boto3
 from dotenv import load_dotenv
 from botocore.exceptions import ClientError
 from threshold_check import DataGetter, ThresholdChecker
+from bot import BlueskyPoster
 
 
 load_dotenv()
