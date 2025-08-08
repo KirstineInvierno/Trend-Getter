@@ -324,7 +324,7 @@ resource "aws_lambda_function" "lambda_function" {
   }
 }
 
-## Notifications lambda
+# Notifications lambda
 
 data "aws_iam_policy_document" "lambda_role_notif" {
   statement {
