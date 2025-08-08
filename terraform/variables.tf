@@ -54,13 +54,3 @@ variable "BLUESKY_PASSWORD" {
   description = "The password being used for the Bluesky bot"
   sensitive = true
 }
-
-variable "BLUESKY_EMAIL" {
-  type      = string
-  sensitive = true
-}
-
-variable "BLUESKY_PASSWORD" {
-  type      = string
-  sensitive = true
-}
