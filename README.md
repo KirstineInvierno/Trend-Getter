@@ -88,6 +88,11 @@ Run the schema.sql file
 ```cd trend-getter
 pip install -r requirements.txt```
 
+4. Run terraform
+```cd terraform
+   terraform init
+   terraform plan
+   terraform apply```
 
 ## How the Pipeline Works
 Data Collection pipeline running on ECS fetches raw mentions → uploads JSON to S3.
