@@ -1,0 +1,22 @@
+FROM python:3.13
+
+
+WORKDIR /app
+
+
+
+COPY requirements.txt .
+RUN pip3 install -r requirements.txt
+
+
+
+COPY dashboard.py .
+COPY insert_topic.py .
+COPY insert_email.py .
+COPY insert_subscription.py .
+COPY sentiment.py .
+COPY gt_dash.py .
+COPY images/ ./images/
+
+
+CMD ["streamlit", "run", "dashboard.py", "--server.address=0.0.0.0"]

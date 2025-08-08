@@ -544,4 +544,107 @@ resource "aws_cloudwatch_event_target" "trigger_stepfunction" {
 
 
 
+resource "aws_iam_role" "ecs_task_execution" {
+  name               = "c18-trendgetter-ecsTaskExecutionRole"
+  assume_role_policy = data.aws_iam_policy_document.ecs_task_assume.json
+}
+
+data "aws_iam_policy_document" "ecs_task_assume" {
+  statement {
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["ecs-tasks.amazonaws.com"]
+    }
+    actions = ["sts:AssumeRole"]
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "exec_policy" {
+  role       = aws_iam_role.ecs_task_execution.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+
+resource "aws_cloudwatch_log_group" "streamlit" {
+  name              = "/ecs/streamlit"
+  retention_in_days = 14
+}
+
+
+resource "aws_security_group" "ecs" {
+  name        = "c18-trendgetter-sg"
+  description = "Allow inbound access to Streamlit"
+  vpc_id      = data.aws_vpc.main.id
+
+  ingress {
+    from_port   = 8501
+    to_port     = 8501
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+
+
+resource "aws_ecs_cluster" "cluster" {
+  name = "c18-ecs-cluster"
+}
+
+
+resource "aws_ecs_task_definition" "streamlit" {
+  family                   = "c18-trendgetter-streamlit-td"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "512"
+  memory                   = "1024"
+  execution_role_arn       = aws_iam_role.ecs_task_execution.arn
+  task_role_arn            = aws_iam_role.ecs_task_execution.arn
+
+  container_definitions = jsonencode([
+    {
+      name  = "c18-trendgetter-container"
+      image = "129033205317.dkr.ecr.eu-west-2.amazonaws.com/c18-trend-getter-dashboard-ecr:latest"
+      portMappings = [
+        { containerPort = 8501, protocol = "tcp" }
+      ]
+      environment = [
+        { name = "DB_HOST", value = var.DB_HOST },
+        { name = "DB_NAME", value = var.DB_NAME },
+        { name = "DB_USER", value = var.DB_USERNAME },
+        { name = "DB_PASSWORD", value = var.DB_PASSWORD },
+        { name = "DB_PORT", value = var.DB_PORT },
+        { name = "DB_SCHEMA", value = var.DB_SCHEMA }
+      ]
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.streamlit.name
+          "awslogs-region"        = "eu-west-2"
+          "awslogs-stream-prefix" = "streamlit"
+        }
+      }
+    }
+  ])
+}
+resource "aws_ecs_service" "streamlit" {
+  name            = "c18-trendgetter-streamlit-service"
+  cluster         = aws_ecs_cluster.cluster.id
+  task_definition = aws_ecs_task_definition.streamlit.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = [data.aws_subnet.public_1.id, data.aws_subnet.public_2.id]
+    security_groups  = [aws_security_group.ecs.id]
+    assign_public_ip = true
+  }
+}
+
 
