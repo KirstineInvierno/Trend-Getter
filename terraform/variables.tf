@@ -39,18 +39,18 @@ variable "AWS_SECRET_ACCESS_KEY" {
 }
 
 variable "AWS_DEFAULT_REGION" {
-  type      = string
+  type        = string
   description = "The dafault region of the AWS services"
 }
 
 variable "BLUESKY_EMAIL" {
-  type      = string
+  type        = string
   description = "The email being used for the Bluesky bot"
-  sensitive = true
+  sensitive   = true
 }
 
 variable "BLUESKY_PASSWORD" {
-  type      = string
+  type        = string
   description = "The password being used for the Bluesky bot"
-  sensitive = true
+  sensitive   = true
 }
