@@ -3,7 +3,7 @@
  ![alt text for screen readers](./trendgettertransparent.png "Architecture Diagram")
 
 ## Summary
-In a world driven by reputation and real-time information, individuals and brands need timely insights into how topics and trends are evolving across the web. While platforms like Google Trends and Bluesky hold valuable data about public interest, accessing and interpreting this data requires technical expertise. As a result, most people are left relying on outdated, second-hand insights. There is a clear need for an accessible tool that empowers anyone to track, compare, and stay informed about the topics they care about — in real time.
+In a world driven by reputation and real-time information, individuals and brands need timely insights into how topics and public opinion are evolving across the web. While platforms like Google Trends and Bluesky hold valuable data about public interest, accessing and interpreting this data requires technical expertise. As a result, most people are left relying on outdated, second-hand insights. There is a clear need for an accessible tool that empowers anyone to track, compare, and stay informed about the topics they care about — in real time.
 
 TrendGetter is a trend monitoring and analytics tool that allows users to select topics and monitor their growth, sentiment, and related activity over time. It continuously collects data from targeted feeds, processes it, and stores results in a database, which can be explored via a live dashboard.
 
@@ -102,8 +102,8 @@ Dashboard queries RDS for visualising data.
 
 
 ## Technology
-- Python - pandas, psycopg2, pylint, pytest
-- AWS - RDS, EC2, ECS, ECR, S3, Step Function, Lambda Function, SES, CloudWatch
+- Python - pandas, psycopg2, pylint, pytest, altair
+- AWS - RDS, EC2, ECS, ECR, S3, Step Function, Lambda Function, SES, CloudWatch,Eventbridge
 - Docker
 - Terraform
 - PostgreSQL
