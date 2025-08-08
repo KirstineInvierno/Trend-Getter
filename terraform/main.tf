@@ -539,7 +539,7 @@ resource "aws_cloudwatch_event_target" "trigger_stepfunction" {
 
 
 resource "aws_iam_role" "ecs_task_execution" {
-  name = "c18-trendgetter-ecsTaskExecutionRole"
+  name               = "c18-trendgetter-ecsTaskExecutionRole"
   assume_role_policy = data.aws_iam_policy_document.ecs_task_assume.json
 }
 
@@ -575,7 +575,7 @@ resource "aws_security_group" "ecs" {
     from_port   = 8501
     to_port     = 8501
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] 
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
@@ -603,13 +603,13 @@ resource "aws_ecs_task_definition" "streamlit" {
 
   container_definitions = jsonencode([
     {
-      name      = "c18-trendgetter-container"
-      image     = "${aws_ecr_repository.streamlit.repository_url}:latest"
+      name  = "c18-trendgetter-container"
+      image = "${aws_ecr_repository.streamlit.repository_url}:latest"
       portMappings = [
         { containerPort = 8501, protocol = "tcp" }
       ]
       environment = [
-        {name = "DB_HOST", value = "value" },
+        { name = "DB_HOST", value = "value" },
         { name = "DB_NAME", value = "trendgetterdb" },
         { name = "DB_USER", value = "trendgetter" },
         { name = "DB_PASSWORD", value = "trendypwd101" },
@@ -635,8 +635,8 @@ resource "aws_ecs_service" "streamlit" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets         = [data.aws_subnet.public_1.id, data.aws_subnet.public_2.id] 
-    security_groups = [aws_security_group.ecs.id]
+    subnets          = [data.aws_subnet.public_1.id, data.aws_subnet.public_2.id]
+    security_groups  = [aws_security_group.ecs.id]
     assign_public_ip = true
   }
 }
