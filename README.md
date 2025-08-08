@@ -1,6 +1,6 @@
 # 📈 TrendGetter
 
- ![alt text for screen readers](./trendgettertransparent.png "Architecture Diagram")
+ ![alt text for screen readers](./trendgetter_transparent_logo.png)
 
 ## Summary
 In a world driven by reputation and real-time information, individuals and brands need timely insights into how topics and public opinion are evolving across the web. While platforms like Google Trends and Bluesky hold valuable data about public interest, accessing and interpreting this data requires technical expertise. As a result, most people are left relying on outdated, second-hand insights. There is a clear need for an accessible tool that empowers anyone to track, compare, and stay informed about the topics they care about — in real time.
