@@ -306,7 +306,7 @@ if __name__ == "__main__":
         st.write(' ')
 
     with col2:
-        st.image("../images/trendgetter_transparrent.png",
+        st.image("./images/trendgetter_transparrent.png",
                  width=600, use_container_width=False)
 
     with col3:
