@@ -40,7 +40,8 @@ class Sender():
         """Returns a ses client to use to send emails"""
 
         ses_client = boto3.client(
-            "ses"
+            "ses",
+            region_name="eu-west-2"
         )
 
         return ses_client
