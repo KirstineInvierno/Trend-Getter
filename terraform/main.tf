@@ -324,7 +324,7 @@ resource "aws_lambda_function" "lambda_function" {
   }
 }
 
-## Notifications lambda
+# Notifications lambda
 
 data "aws_iam_policy_document" "lambda_role_notif" {
   statement {
@@ -449,6 +449,25 @@ resource "aws_iam_policy" "step_function_policy" {
 resource "aws_iam_role_policy_attachment" "step_function_attach_policy" {
   role       = aws_iam_role.step_function_role.name
   policy_arn = aws_iam_policy.step_function_policy.arn
+}
+
+## Bluesky bot lambda
+
+resource "aws_lambda_function" "lambda_function_bsky_bot" {
+  function_name = "c18-trend-getter-bsky-bot"
+  role          = aws_iam_role.lambda_role_notif.arn
+  package_type  = "Image"
+  image_uri     = "129033205317.dkr.ecr.eu-west-2.amazonaws.com/c18-trend-getter-bsky-bot-ecr:latest"
+  memory_size   = 7168
+  timeout       = 300
+  architectures = ["x86_64"]
+
+  environment {
+    variables = {
+      BLUESKY_EMAIL    = var.BLUESKY_EMAIL
+      BLUESKY_PASSWORD = var.BLUESKY_PASSWORD
+    }
+  }
 }
 
 
