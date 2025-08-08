@@ -587,7 +587,7 @@ resource "aws_security_group" "ecs" {
 }
 
 
-data "aws_ecs_cluster" "cluster" {
+resource "aws_ecs_cluster" "cluster" {
   name = "c18-ecs-cluster"
 }
 
